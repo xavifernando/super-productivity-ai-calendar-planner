@@ -260,6 +260,14 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
       </div>
       <div id="sec-tools" class="settings-section">
         <div class="card-title" style="margin-bottom:10px;">🛠️ Schedule Maintenance & Cleanup Tools</div>
+        <div class="tutorial-step" style="border-left-color:var(--danger);">
+          <div>
+            <strong>🧹 Factory Reset Plugin Storage:</strong> Wipes all locally cached settings, API keys, custom habits, and saved drafts from your browser/app storage.
+            <div style="margin-top:6px;">
+              <button class="btn btn-danger btn-sm" onclick="factoryResetPluginStorage()">⚠️ Factory Reset Local Storage</button>
+            </div>
+          </div>
+        </div>
         <div class="tutorial-step"><div><strong>🧹 Clear Today & Inbox:</strong> Cleans up uncompleted tasks scheduled for the active date and cleans empty backlog tasks. <div style="margin-top:6px;"><button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()">Clear Today & Inbox Tasks</button></div></div></div>
         <div class="tutorial-step"><div><strong>↩️ Undo Last Apply:</strong> Reverts the most recently applied batch of tasks. <div style="margin-top:6px;"><button class="btn btn-secondary btn-sm" onclick="undoLastAppliedTasks()">Undo Last Apply</button></div></div></div>
       </div>
@@ -289,23 +297,10 @@ const DEFAULT_CONFIG={theme:"catppuccin",provider:"gemini",model:"gemini-2.5-fla
 
 // Compressed Habits & Rituals Definition
 const RAW_HABITS_DATA=[
-  ["Health & Fitness","Physical training & movement",[["Strength training session","3x / week",60],["Cardio session (run/cycle/swim)","3x / week",45],["Mobility/stretching/yoga","2x / week",20],["10,000+ steps / active movement","5x / week",30],["Bodyweight or core workout","1x / week",30],["Rest / active recovery day","1x / week",15],["Track weight & measurements","1x / week",5]]],
-  ["Nutrition","Fuel & hydration habits",[["Meal prep for week ahead","1x / week",60],["Grocery shopping with list","1x / week",45],["Home-cooked meals","Daily",30],["Hit daily water intake target","Daily",5],["Limit processed food / sugar","1x / week",5],["Review weekly nutrition plan","1x / week",15]]],
-  ["Sleep & Recovery","Anchor the 05:30-22:00 rhythm",[["Wake at 05:30 consistently","Daily",5],["Lights out by 22:00","Daily",15],["No screens 30m before bed","Daily",30],["Full digital detox evening","1x / week",60],["Nap or deliberate rest block","As needed",20]]],
-  ["Mental & Emotional Wellbeing","Clear mind amid parallel tracks",[["Meditation / breathwork session","5x / week",15],["Journaling & gratitude","Daily",10],["Weekly review of wins & blockers","1x / week",20],["Time in nature / phone-free walk","2x / week",30],["Digital declutter (inbox zero)","1x / week",15],["Talk to friend or family member","2x / week",20]]],
-  ["Learning & Engineering Skills","Polymath study & vault",[["Deep-work study session","4x / week",60],["Spaced-repetition review (FSRS)","6x / week",20],["Refine notes in Obsidian vault","3x / week",30],["Read technical article / paper","3x / week",30],["Watch lecture or tutorial","2x / week",45],["Review and update MOC files","1x / week",20]]],
-  ["Career - Freelancing","CAD, maintenance & audit streams",[["Send client outreach / proposals","3x / week",30],["Active client deliverables","Daily",90],["Update portfolio / case studies","1x / week",45],["Follow up on quotes / invoices","1x / week",15],["Research new leads / platforms","1x / week",30]]],
-  ["Career - PhD Applications","Academic research & writing",[["Research target labs / advisors","2x / week",45],["Work on SOP / proposal draft","3x / week",60],["Track deadlines & requirements","1x / week",15],["Recommender contact outreach","1x / week",20],["Refine CV & academic profile","1x / week",30]]],
-  ["Career - Startup","Validating & building venture",[["Work on business plan / MVP","3x / week",60],["Customer discovery feedback","1x / week",30],["Review competitors & pricing","1x / week",30],["Update financial model / budget","1x / week",20]]],
-  ["Career - AI Training Contract","Task design, datasets & rubrics",[["Design technician workflow tasks","3x / week",45],["Build synthetic dataset entries","3x / week",45],["Write & calibrate grading rubrics","2x / week",30],["Prompting / eval study","1x / week",30]]],
-  ["Productivity & Life OS","Keep tools & spaces synced",[["Weekly planning session (WPP)","1x / week",45],["Daily task triage","Daily",15],["Review & clear backlog","1x / week",20],["Sync ClickUp/Notion/GCal","1x / week",15],["Run Pomodoro focus blocks","5x / week",50],["End-of-week retrospective","1x / week",30]]],
-  ["Finance","Track runway across tracks",[["Track expenses & update budget","1x / week",20],["Review income vs savings goal","1x / week",15],["Check investments & accounts","1x / week",15],["Plan next week spending","1x / week",15]]],
-  ["Relationships & Social","Deliberate connection",[["Quality time with family","2x / week",60],["Call or meet a friend","1x / week",30],["Mentor or peer outreach","1x / week",20],["Plan or join social activity","1x / week",60]]],
-  ["Home & Environment","Clear space for clear head",[["Deep clean living/work space","1x / week",45],["Declutter desk & digital workspace","2x / week",15],["Laundry & household chores","2x / week",30],["Organize physical documents","1x / week",20]]],
-  ["Polymath & Hobbies","Curiosity & languages",[["Language practice (daily unit)","3x / week",20],["Watch anime/film with focus","1-2x / week",45],["Read non-technical/fiction book","2x / week",30],["Explore new topic outside field","1x / week",30],["Travel research session","1x / week",20]]],
-  ["Leisure & Fandom","Recharge time",[["Watch match / news","As scheduled",90],["Discuss tactics with friends","1x / week",20],["Unstructured downtime","1x / week",60]]],
-  ["Reflection & Spiritual","Zoom out on direction",[["Mindfulness / prayer practice","Daily",15],["Review long-term vs weekly goals","1x / week",20],["Gratitude list","3x / week",5]]],
-  ["Digital & Tech Hygiene","Keep tools reliable",[["Back up vault & project files","1x / week",15],["Update software & plugins","1x / week",15],["Unsubscribe from digital clutter","1x / week",15],["Security & password checkup","1x / month",15]]]
+  ["Health & Movement","Daily physical wellness & energy",[["Morning stretch & mobility","Daily",15],["Workout session","3x / week",45],["Walk (8,000+ steps)","Daily",30],["Hydration check (2L+)","Daily",5]]],
+  ["Focus & Deep Work","Mindful productivity habits",[["Morning planning & triage","Daily",15],["Deep work block 1","Daily",60],["Deep work block 2","Daily",60],["Inbox zero cleanup","Daily",15]]],
+  ["Learning & Reading","Knowledge acquisition & growth",[["Read book / technical articles","Daily",30],["Review notes & flashcards","Daily",15],["Skill practice / tutorial","3x / week",45]]],
+  ["Recovery & Mindfulness","Rest, reflection & digital detox",[["Meditation / breathwork","Daily",10],["Evening wind-down (no screens)","Daily",30],["Weekly retrospective review","1x / week",30]]]
 ];
 
 function buildDefaultHabitCategories(){
@@ -1193,6 +1188,16 @@ async function cleanCurrentDateTasks(){
 }
 
 // BACKGROUND FINISHDAY HOOK INTEGRATION
+
+function factoryResetPluginStorage(){
+  if(confirm("Are you sure you want to factory reset all plugin storage?\n\nThis will remove all locally saved API keys, custom habit categories, iCal URLs, and cached staging plans, restoring the plugin to pure defaults.")){
+    const keysToRemove = ["sp_ai_cal_cfg_v4","sp_ai_calendar_planner_cfg","sp_ai_habits_v4","sp_ai_custom_proj_v4","sp_ai_plan_v4_today","sp_ai_plan_v4_tomorrow","sp_last_applied_task_ids"];
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    showNotification("Factory reset complete! Reloading...", "SUCCESS");
+    setTimeout(() => { location.reload(); }, 600);
+  }
+}
+
 window.addEventListener("DOMContentLoaded",()=>{
   loadConfig();
   setPlanningDate("today");
