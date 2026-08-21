@@ -1,0 +1,18 @@
+{
+  "name": "super-productivity-ai-calendar-planner",
+  "version": "4.5.2",
+  "description": "Super Productivity plugin for AI-powered continuous timeblocking, habits rhythm, project backlog explorer, calendar sync, and SuperSync mobile compatibility.",
+  "main": "plugin.js",
+  "author": "xavier sethu",
+  "license": "MIT",
+  "keywords": [
+    "super-productivity",
+    "plugin",
+    "ai",
+    "calendar",
+    "task-planner",
+    "habits",
+    "time-blocking",
+    "life-os"
+  ]
+}

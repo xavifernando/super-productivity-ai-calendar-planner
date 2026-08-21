@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Calendar & Habits Planner</title>
+<style>
+:root{--bg:#1e1e2e;--bg-dark:#181825;--card:#252538;--text:#cdd6f4;--text-muted:#a6adc8;--primary:#89b4fa;--primary-hover:#b4befe;--accent:#f5c2e7;--success:#a6e3a1;--warn:#fab387;--danger:#f38ba8;--purple:#cba6f7;--border:#313244;--font:system-ui,-apple-system,sans-serif}
+body[data-theme="monochrome"]{--bg:#000000;--bg-dark:#0a0a0a;--card:#141414;--text:#ffffff;--text-muted:#a0a0a0;--primary:#ffffff;--primary-hover:#e0e0e0;--accent:#d0d0d0;--success:#ffffff;--warn:#cccccc;--danger:#ffffff;--purple:#e0e0e0;--border:#262626}
+body[data-theme="midnight"]{--bg:#0d0e15;--bg-dark:#050608;--card:#151722;--text:#e2e8f0;--text-muted:#94a3b8;--primary:#38bdf8;--primary-hover:#7dd3fc;--accent:#f472b6;--success:#4ade80;--warn:#fb923c;--danger:#f87171;--purple:#c084fc;--border:#1e293b}
+body[data-theme="nord"]{--bg:#2e3440;--bg-dark:#242933;--card:#3b4252;--text:#eceff4;--text-muted:#d8dee9;--primary:#88c0d0;--primary-hover:#81a1c1;--accent:#b48ead;--success:#a3be8c;--warn:#ebcb8b;--danger:#bf616a;--purple:#b48ead;--border:#434c5e}
+body[data-theme="cyberpunk"]{--bg:#120b22;--bg-dark:#0a0515;--card:#1f1438;--text:#f0e6ff;--text-muted:#a78bfa;--primary:#06b6d4;--primary-hover:#22d3ee;--accent:#f43f5e;--success:#10b981;--warn:#f59e0b;--danger:#ef4444;--purple:#d946ef;--border:#3b1d6e}
+body[data-theme="studio"]{--bg:#27272a;--bg-dark:#18181b;--card:#3f3f46;--text:#fafafa;--text-muted:#a1a1aa;--primary:#fbbf24;--primary-hover:#fcd34d;--accent:#f472b6;--success:#34d399;--warn:#fb923c;--danger:#f87171;--purple:#a78bfa;--border:#52525b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);padding:14px;min-height:100vh;line-height:1.45}
+header{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.header-title{display:flex;align-items:center;gap:8px}
+.header-title h1{font-size:1.15rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+body[data-theme="monochrome"] .header-title h1{background:none;-webkit-text-fill-color:var(--text)}
+.header-badge{font-size:.74rem;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--primary);border:1px solid var(--border);font-weight:600}
+.header-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.date-toggle-group{display:inline-flex;background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;padding:2px}
+.date-toggle-btn{background:transparent;border:none;color:var(--text-muted);padding:4px 8px;font-size:.78rem;font-weight:600;cursor:pointer;border-radius:5px}
+.date-toggle-btn.active{background:var(--primary);color:#11111b}
+body[data-theme="monochrome"] .date-toggle-btn.active{background:#ffffff;color:#000000}
+.tabs-nav{display:flex;gap:3px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{background:transparent;border:none;color:var(--text-muted);padding:7px 12px;font-size:.85rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;border-radius:5px 5px 0 0}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:rgba(255,255,255,.05)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card{background:var(--card);border-radius:8px;padding:14px;margin-bottom:14px;border:1px solid var(--border)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.card-title{font-size:.95rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s ease;text-decoration:none}
+.btn-primary{background:var(--primary);color:#11111b}.btn-primary:hover{background:var(--primary-hover)}
+body[data-theme="monochrome"] .btn-primary{background:#ffffff;color:#000000}
+.btn-outline{background:transparent;border-color:var(--primary);color:var(--primary)}
+.btn-dryrun{background:var(--purple);color:#11111b;font-weight:700}
+body[data-theme="monochrome"] .btn-dryrun{background:#ffffff;color:#000000}
+.btn-habits{background:linear-gradient(135deg,var(--accent),var(--purple));color:#11111b;font-weight:700}
+body[data-theme="monochrome"] .btn-habits{background:#ffffff;color:#000000}
+.btn-apply{background:var(--success);color:#11111b;font-weight:700}
+body[data-theme="monochrome"] .btn-apply{background:#ffffff;color:#000000}
+.btn-apply:disabled,.btn-dryrun:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{background:rgba(255,255,255,.08);color:var(--text);border-color:var(--border)}
+.btn-danger{background:rgba(243,139,168,.15);color:var(--danger);border-color:rgba(243,139,168,.3)}
+body[data-theme="monochrome"] .btn-danger{background:transparent;color:#ffffff;border-color:#555}
+.btn-sm{padding:3px 7px;font-size:.74rem}
+.form-group{margin-bottom:10px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+label{display:block;margin-bottom:3px;font-size:.76rem;color:var(--text-muted)}
+input,select,textarea{width:100%;padding:7px 9px;background:var(--bg-dark);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:inherit;font-size:.82rem;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+.grid-2{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+@media(max-width:800px){.grid-2{grid-template-columns:1fr}}
+.stat-boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:6px;margin-bottom:12px}
+.stat-box{background:var(--bg-dark);padding:8px;border-radius:6px;border:1px solid var(--border);text-align:center}
+.stat-value{font-size:1.1rem;font-weight:700;color:var(--primary);margin-top:1px}
+.stat-label{font-size:.66rem;color:var(--text-muted);text-transform:uppercase}
+.staged-card{background:var(--bg-dark);border-radius:6px;padding:10px;border:1px solid var(--border);border-left:4px solid var(--primary);margin-bottom:8px}
+.staged-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.staged-title-input{flex:1;font-size:.9rem;font-weight:600;color:var(--text);background:transparent;border:1px solid transparent;border-radius:4px;padding:3px 6px}
+.staged-title-input:focus,.staged-title-input:hover{background:rgba(255,255,255,.05);border-color:var(--border)}
+.staged-meta-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.8rem;padding-left:24px}
+.staged-time-controls{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.3);padding:3px 8px;border-radius:5px;border:1px solid var(--border)}
+.task-time-box{width:96px!important;padding:2px 4px!important;font-size:.82rem!important;font-weight:600!important;background:var(--bg-dark)!important;border:1px solid var(--border)!important;border-radius:4px!important;color:var(--text)!important;text-align:center}
+.task-est-box{width:50px!important;padding:2px 4px!important;font-size:.82rem!important;font-weight:600!important;background:var(--bg-dark)!important;border:1px solid var(--border)!important;border-radius:4px!important;color:var(--text)!important;text-align:center}
+.staged-rationale{padding-left:24px;margin-top:4px;font-size:.78rem;color:var(--text-muted)}
+.accordion-box{background:var(--bg-dark);border-radius:6px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden}
+.accordion-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,.02);cursor:pointer;user-select:none}
+.accordion-header:hover{background:rgba(255,255,255,.05)}
+.accordion-title{font-weight:700;color:var(--primary);display:flex;align-items:center;gap:6px;font-size:.88rem}
+.accordion-items-container{padding:8px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--card);border-radius:5px;border:1px solid rgba(255,255,255,.05);gap:6px;flex-wrap:wrap}
+.item-row-title{font-weight:500;font-size:.82rem;color:var(--text);flex:1;min-width:140px}
+.item-row-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.modal-backdrop{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:9999}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;width:90%;max-width:400px}
+.modal-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
+.timeline-list{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto}
+.timeline-item{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:5px;background:var(--bg-dark);border-left:3px solid var(--primary);font-size:.82rem}
+.timeline-item.meeting{border-left-color:var(--warn);background:rgba(250,179,135,.08)}
+.timeline-item.project-task{border-left-color:var(--success);background:rgba(166,227,161,.06)}
+.timeline-time{font-weight:700;color:var(--text-muted);min-width:85px}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;font-size:.7rem;font-weight:600}
+.badge-high{background:rgba(243,139,168,.2);color:var(--danger)}.badge-med{background:rgba(250,179,135,.2);color:var(--warn)}.badge-low{background:rgba(166,227,161,.2);color:var(--success)}.badge-tag{background:rgba(137,180,250,.15);color:var(--primary)}.badge-proj{background:rgba(203,166,247,.18);color:var(--purple)}
+body[data-theme="monochrome"] .badge{background:#262626;color:#ffffff;border:1px solid #404040}
+.ai-summary-box{background:linear-gradient(135deg,rgba(137,180,250,.08),rgba(203,166,247,.08));border:1px solid rgba(137,180,250,.3);border-radius:6px;padding:10px;margin-bottom:12px;display:flex;gap:8px;font-size:.82rem}
+body[data-theme="monochrome"] .ai-summary-box{background:#111;border-color:#333}
+.loading-spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:24px 10px;color:var(--text-muted);font-size:.84rem}
+.calendar-source-pill{display:inline-flex;align-items:center;gap:3px;background:rgba(137,180,250,.1);border:1px solid rgba(137,180,250,.25);border-radius:4px;padding:2px 5px;font-size:.7rem;margin-right:3px;margin-bottom:3px}
+.tutorial-step{display:flex;gap:10px;background:var(--bg-dark);border-radius:6px;padding:10px;margin-bottom:8px;border-left:3px solid var(--primary);font-size:.82rem}
+.step-number{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#11111b;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.78rem}
+body[data-theme="monochrome"] .step-number{background:#ffffff;color:#000000}
+.settings-subnav{display:flex;gap:5px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px;flex-wrap:wrap}
+.subnav-btn{background:var(--bg-dark);border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:5px;font-size:.78rem;font-weight:600;cursor:pointer}
+.subnav-btn.active{background:var(--primary);color:#11111b;border-color:var(--primary)}
+body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#000000;border-color:#ffffff}
+.settings-section{display:none}
+.settings-section.active{display:block;animation:fadeIn .15s ease}
+.guide-pro-tip{background:rgba(137,180,250,.08);border-left:3px solid var(--primary);padding:8px 12px;border-radius:4px;margin-top:6px;font-size:.8rem}
+</style>
+</head>
+<body data-theme="catppuccin">
+  <header>
+    <div class="header-title">
+      <svg width="24" height="24" viewBox="0 0 48 48"><rect x="6" y="8" width="36" height="34" rx="6" fill="#89b4fa"/><path d="M 6 14 Q 6 8 12 8 L 36 8 Q 42 8 42 14 L 42 16 Z" fill="#313244" opacity="0.6"/><circle cx="15" cy="24" r="2" fill="#fff"/><circle cx="24" cy="24" r="2" fill="#fff"/><circle cx="33" cy="24" r="2" fill="#fff"/></svg>
+      <h1>AI Calendar & Task Planner</h1>
+      <div class="date-toggle-group">
+        <button class="date-toggle-btn active" id="btnDateToday" onclick="setPlanningDate('today')">📅 Today</button>
+        <button class="date-toggle-btn" id="btnDateTomorrow" onclick="setPlanningDate('tomorrow')">⏩ Tomorrow</button>
+      </div>
+      <span class="header-badge" id="currentDateBadge">Today</span>
+    </div>
+    <div class="header-actions">
+      <select id="quickProviderSelect" style="width:auto;padding:4px 6px;">
+        <option value="gemini">Google Gemini</option>
+        <option value="openai">OpenAI</option>
+        <option value="claude">Claude</option>
+        <option value="ollama">Ollama</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="groq">Groq</option>
+        <option value="custom">Custom</option>
+      </select>
+      <button class="btn btn-dryrun" id="btnDryRun" onclick="performMultiProjectDryRun()">🔍 Dry Run (Full Day Plan)</button>
+      <button class="btn btn-apply" id="btnApplyTasksToToday" onclick="applySelectedTasksOnly()" disabled>🚀 Apply Tasks (<span id="selectedTasksCountBadge">0</span>)</button>
+    </div>
+  </header>
+
+  <div class="tabs-nav">
+    <button class="tab-btn active" data-tab="tab-planner" onclick="switchTab('tab-planner')">📅 Daily Plan & Staging</button>
+    <button class="tab-btn" data-tab="tab-habits" onclick="switchTab('tab-habits')">⚡ Habits & Rituals</button>
+    <button class="tab-btn" data-tab="tab-projects" onclick="switchTab('tab-projects')">📁 Projects Explorer</button>
+    <button class="tab-btn" data-tab="tab-timeline" onclick="switchTab('tab-timeline')">⏱️ Schedule Timeline</button>
+    <button class="tab-btn" data-tab="tab-settings" onclick="switchTab('tab-settings')">⚙️ Settings & Guide</button>
+  </div>
+
+  <!-- TAB 1: DAILY PLAN -->
+  <div id="tab-planner" class="tab-content active">
+    <div class="stat-boxes">
+      <div class="stat-box"><div class="stat-label">Meetings</div><div class="stat-value" id="statMeetingsCount">0</div></div>
+      <div class="stat-box"><div class="stat-label">Projects</div><div class="stat-value" id="statProjectsCount">0</div></div>
+      <div class="stat-box"><div class="stat-label">Backlog</div><div class="stat-value" id="statTotalTasksCount">0</div></div>
+      <div class="stat-box"><div class="stat-label">Free Focus</div><div class="stat-value" id="statFreeHours" style="color:var(--success);">0h</div></div>
+      <div class="stat-box"><div class="stat-label">Coverage</div><div class="stat-value" id="statCoveragePercent" style="color:var(--primary);">100%</div></div>
+      <div class="stat-box"><div class="stat-label">Staged</div><div class="stat-value" id="statStagedCount" style="color:var(--purple);">0</div></div>
+    </div>
+    <div class="ai-summary-box" id="aiSummarySection" style="display:none;">
+      <div><strong>🧠 Breakdown:</strong> <span id="aiSummaryBody"></span></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🎯 Staged Project Tasks (Continuous Timeblocking)</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" id="btnSelectAllTasks">Toggle All</button>
+          <button class="btn btn-secondary btn-sm" id="btnUndoLastApply" onclick="undoLastAppliedTasks()" style="display:none;">↩️ Undo Apply</button>
+          <button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()" title="Clean Today & Inbox tasks">🧹 Clear Today & Inbox</button>
+        </div>
+      </div>
+      <div id="emptyTasksState" class="empty-state">No continuous plan staged. Click <strong>"🔍 Dry Run (Full Day Plan)"</strong> in the header.</div>
+      <div id="stagedItemsContainer" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: HABITS & RITUALS -->
+  <div id="tab-habits" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">⚡ Habits & Rituals Manager</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Manage weekly habits and sync directly to Super Productivity's native Habits section.</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="openAddCategoryModal()">+ Category</button>
+          <button class="btn btn-habits btn-sm" onclick="openAddHabitModal()">+ Habit</button>
+          <button class="btn btn-apply btn-sm" onclick="syncAllHabitsToSuperProductivity()">💾 Sync to Habits Section</button>
+          <button class="btn btn-secondary btn-sm" id="btnResetHabitsLibrary">🔄 Reset Defaults</button>
+        </div>
+      </div>
+      <div id="habitCategoriesAccordion"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PROJECTS EXPLORER (COLLAPSIBLE ACCORDION + TOGGLES) -->
+  <div id="tab-projects" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📁 Projects & Backlog Explorer</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Manage project backlogs and manually add tasks directly to Today's staging.</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="openAddProjectModal()">+ Project</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAddProjectTaskModal()">+ Task</button>
+          <button class="btn btn-secondary btn-sm" onclick="scanSuperProductivityData()">🔄 Rescan App</button>
+        </div>
+      </div>
+      <div id="projectsAccordionContainer"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: TIMELINE -->
+  <div id="tab-timeline" class="tab-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🗓️ Calendar Commitments (<span id="calendarDateHeading">Today</span>)</div><button class="btn btn-secondary btn-sm" onclick="fetchAndParseAllCalendars()">🔄 Refresh</button></div>
+        <div id="calendarSyncStatusBox" style="margin-bottom:6px;"></div>
+        <div class="timeline-list" id="timelineListContainer"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">⏱️ Integrated Timeline</div></div>
+        <div class="timeline-list" id="projectedScheduleContainer"><div class="empty-state">Run Dry Run to view full day timeline.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: SETTINGS & GUIDE -->
+  <div id="tab-settings" class="tab-content">
+    <div class="card">
+      <div class="settings-subnav">
+        <button class="subnav-btn active" data-sub="sec-general" onclick="switchSettingsSection('sec-general')">🎨 General & Themes</button>
+        <button class="subnav-btn" data-sub="sec-ai" onclick="switchSettingsSection('sec-ai')">🤖 AI Providers</button>
+        <button class="subnav-btn" data-sub="sec-calendar" onclick="switchSettingsSection('sec-calendar')">🔗 Calendar Feeds</button>
+        <button class="subnav-btn" data-sub="sec-tools" onclick="switchSettingsSection('sec-tools')">🛠️ Cleanup Tools</button>
+        <button class="subnav-btn" data-sub="sec-guide" onclick="switchSettingsSection('sec-guide')">📖 Description & Guide</button>
+      </div>
+      <div id="sec-general" class="settings-section active">
+        <div class="form-row">
+          <div class="form-group"><label>Theme Preset</label><select id="themeSelect" onchange="applyTheme(this.value)"><option value="catppuccin">Catppuccin Mocha</option><option value="monochrome">Monochrome Minimal (B&W)</option><option value="midnight">Midnight OLED</option><option value="nord">Nord Arctic</option><option value="cyberpunk">Cyberpunk Neon</option><option value="studio">Minimal Studio</option></select></div>
+          <div class="form-group"><label>Preferred Focus Chunk</label><select id="preferredChunkDuration" onchange="onGeneralSettingLiveChange()"><option value="30">30 Min</option><option value="45">45 Min</option><option value="60" selected>60 Min (Deep Work)</option><option value="90">90 Min</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Workday Start</label><input type="time" id="workdayStart" value="09:00" onchange="onGeneralSettingLiveChange()"/></div>
+          <div class="form-group"><label>Workday End</label><input type="time" id="workdayEnd" value="18:00" onchange="onGeneralSettingLiveChange()"/></div>
+          <div class="form-group"><label>Max Task Blocks</label><input type="number" id="maxTasksCount" value="25" min="5" max="50" onchange="onGeneralSettingLiveChange()"/></div>
+        </div>
+        <div class="form-group"><label>Custom Directives</label><textarea id="customPromptInstructions" rows="2" placeholder="e.g. '100% full-day coverage with zero gaps. Split large tasks into 45-60m blocks.'" onchange="onGeneralSettingLiveChange()"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveGeneralSettings">💾 Save General</button></div>
+      </div>
+      <div id="sec-ai" class="settings-section">
+        <div class="card-header"><div class="card-title">🤖 AI Provider</div><button class="btn btn-outline btn-sm" id="btnTestAIConnection">⚡ Test Connection</button></div>
+        <div class="form-row">
+          <div class="form-group"><label>Active Provider</label><select id="aiProviderSelect"><option value="gemini">Google Gemini</option><option value="openai">OpenAI (GPT-4o)</option><option value="claude">Anthropic Claude</option><option value="ollama">Ollama</option><option value="openrouter">OpenRouter</option><option value="groq">Groq</option><option value="custom">Custom</option></select></div>
+          <div class="form-group"><label>Model</label><input type="text" id="aiModelInput" value="gemini-2.5-flash"/></div>
+        </div>
+        <div class="form-group"><label>API Key</label><input type="password" id="aiApiKeyInput" placeholder="Enter API Key"/></div>
+        <div class="form-group"><label>API Endpoint (Optional)</label><input type="text" id="aiEndpointInput" placeholder="https://..."/></div>
+        <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveAISettings">💾 Save AI</button></div>
+      </div>
+      <div id="sec-calendar" class="settings-section">
+        <div class="card-header"><div class="card-title">🔗 Calendar Feeds</div><div style="display:flex;gap:5px;"><button class="btn btn-outline btn-sm" onclick="fetchAndParseAllCalendars()">🔄 Sync</button><label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer;">📂 .ics<input type="file" id="icsFileInput" accept=".ics,text/calendar" style="display:none;"/></label></div></div>
+        <div id="calendarSourcesStatus" style="margin-bottom:8px;"></div>
+        <div class="form-group"><label>iCal URLs (One per line)</label><textarea id="icalUrlsInput" rows="2" placeholder="https://calendar.google.com/.../basic.ics"></textarea></div>
+        <div class="form-group"><label>Manual Events (Optional)</label><textarea id="manualEventsInput" rows="2" placeholder="09:30 - 10:00 Daily Team Standup"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveCalendarFeeds">💾 Save & Sync</button></div>
+      </div>
+      <div id="sec-tools" class="settings-section">
+        <div class="card-title" style="margin-bottom:10px;">🛠️ Schedule Maintenance & Cleanup Tools</div>
+        <div class="tutorial-step"><div><strong>🧹 Clear Today & Inbox:</strong> Cleans up uncompleted tasks scheduled for the active date and cleans empty backlog tasks. <div style="margin-top:6px;"><button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()">Clear Today & Inbox Tasks</button></div></div></div>
+        <div class="tutorial-step"><div><strong>↩️ Undo Last Apply:</strong> Reverts the most recently applied batch of tasks. <div style="margin-top:6px;"><button class="btn btn-secondary btn-sm" onclick="undoLastAppliedTasks()">Undo Last Apply</button></div></div></div>
+      </div>
+      <div id="sec-guide" class="settings-section">
+        <div class="card-title" style="margin-bottom:8px;">📖 Plugin Overview & How to Use</div>
+        <div style="font-size:0.84rem;color:var(--text);margin-bottom:12px;line-height:1.6;">
+          <strong>AI Calendar & Task Planner</strong> is an automated daily executive assistant for Super Productivity. It reads your calendar commitments (Google Calendar, Outlook, iCal), computes exact free time gaps between meetings, and populates 100% of your open hours with project tasks and deep-work blocks.
+        </div>
+        <div class="tutorial-step"><div class="step-number">1</div><div><strong>Connect Calendars:</strong> Add iCal subscription feeds in <em>Calendar Feeds</em> or upload an <code>.ics</code> file. Meetings are deduplicated and synchronized across timezones.</div></div>
+        <div class="tutorial-step"><div class="step-number">2</div><div><strong>Habits & Rituals:</strong> Categorize your habits in <em>Habits & Rituals</em>. Use the category <strong>Toggle All</strong> switch or click <strong>💾 Sync to Habits Section</strong> to register them into Super Productivity's native habit tracker (<code>#/habits</code>).</div></div>
+        <div class="tutorial-step"><div class="step-number">3</div><div><strong>Projects Backlog:</strong> Use <em>Projects Explorer</em> to organize your tasks. Click <strong>➕ Add to Today</strong> on any task to manually schedule it into today's timeline.</div></div>
+        <div class="tutorial-step"><div class="step-number">4</div><div><strong>Full Day Dry Run:</strong> Click <strong>🔍 Dry Run (Full Day Plan)</strong> to let AI calculate continuous focus blocks for every open minute with zero dead time.</div></div>
+        <div class="tutorial-step"><div class="step-number">5</div><div><strong>Plan Ahead:</strong> Toggle between <strong>📅 Today</strong> and <strong>⏩ Tomorrow</strong> at any time to stage and schedule tomorrow in advance.</div></div>
+        <div class="guide-pro-tip">💡 <strong>Pro Tip:</strong> When you finish your workday in Super Productivity, the <code>finishDay</code> hook automatically drafts tomorrow's schedule so it's ready when you wake up!</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalAddCategory" class="modal-backdrop"><div class="modal-box"><div class="modal-title">📁 Add Habit Category</div><div class="form-group"><label>Name</label><input type="text" id="newCategoryNameInput"/></div><div class="form-group"><label>Description</label><input type="text" id="newCategoryDescInput"/></div><div class="modal-actions"><button class="btn btn-secondary btn-sm" onclick="closeModal('modalAddCategory')">Cancel</button><button class="btn btn-primary btn-sm" onclick="submitAddCategory()">Create</button></div></div></div>
+  <div id="modalAddHabit" class="modal-backdrop"><div class="modal-box"><div class="modal-title">⚡ Add Habit</div><div class="form-group"><label>Category</label><select id="habitCategorySelect"></select></div><div class="form-group"><label>Title</label><input type="text" id="newHabitTitleInput"/></div><div class="form-row"><div class="form-group"><label>Freq</label><input type="text" id="newHabitFreqInput" value="Daily"/></div><div class="form-group"><label>Duration (Min)</label><input type="number" id="newHabitDurInput" value="15"/></div></div><div class="modal-actions"><button class="btn btn-secondary btn-sm" onclick="closeModal('modalAddHabit')">Cancel</button><button class="btn btn-primary btn-sm" onclick="submitAddHabit()">Create</button></div></div></div>
+  <div id="modalAddProject" class="modal-backdrop"><div class="modal-box"><div class="modal-title">📁 Add Project</div><div class="form-group"><label>Project Name</label><input type="text" id="newProjectTitleInput"/></div><div class="modal-actions"><button class="btn btn-secondary btn-sm" onclick="closeModal('modalAddProject')">Cancel</button><button class="btn btn-primary btn-sm" onclick="submitAddProject()">Create</button></div></div></div>
+  <div id="modalAddProjectTask" class="modal-backdrop"><div class="modal-box"><div class="modal-title">🎯 Add Task to Project</div><div class="form-group"><label>Project</label><select id="projectTaskCategorySelect"></select></div><div class="form-group"><label>Task Title</label><input type="text" id="newProjectTaskTitleInput"/></div><div class="form-group"><label>Estimate (Minutes)</label><input type="number" id="newProjectTaskDurInput" value="45"/></div><div class="modal-actions"><button class="btn btn-secondary btn-sm" onclick="closeModal('modalAddProjectTask')">Cancel</button><button class="btn btn-primary btn-sm" onclick="submitAddProjectTask()">Add Task</button></div></div></div>
+
+<script>
+const PROVIDER_DEFAULTS={gemini:{model:"gemini-2.5-flash",endpoint:"https://generativelanguage.googleapis.com/v1beta/models"},openai:{model:"gpt-4o",endpoint:"https://api.openai.com/v1/chat/completions"},claude:{model:"claude-3-7-sonnet-20250219",endpoint:"https://api.anthropic.com/v1/messages"},ollama:{model:"llama3.2",endpoint:"http://localhost:11434/v1/chat/completions"},openrouter:{model:"deepseek/deepseek-r1",endpoint:"https://openrouter.ai/api/v1/chat/completions"},groq:{model:"llama-3.3-70b-versatile",endpoint:"https://api.groq.com/openai/v1/chat/completions"},custom:{model:"custom-model",endpoint:"http://localhost:8000/v1/chat/completions"}};
+const DEFAULT_CONFIG={theme:"catppuccin",provider:"gemini",model:"gemini-2.5-flash",apiKey:"",endpoint:"",workdayStart:"09:00",workdayEnd:"18:00",maxTasks:25,preferredChunk:"60",customPrompt:"Ensure 100% full-day coverage across every hour and minute with zero gaps. Decompose large tasks into 45-60m blocks.",icalUrls:"",manualEvents:""};
+
+// Compressed Habits & Rituals Definition
+const RAW_HABITS_DATA=[
+  ["Health & Fitness","Physical training & movement",[["Strength training session","3x / week",60],["Cardio session (run/cycle/swim)","3x / week",45],["Mobility/stretching/yoga","2x / week",20],["10,000+ steps / active movement","5x / week",30],["Bodyweight or core workout","1x / week",30],["Rest / active recovery day","1x / week",15],["Track weight & measurements","1x / week",5]]],
+  ["Nutrition","Fuel & hydration habits",[["Meal prep for week ahead","1x / week",60],["Grocery shopping with list","1x / week",45],["Home-cooked meals","Daily",30],["Hit daily water intake target","Daily",5],["Limit processed food / sugar","1x / week",5],["Review weekly nutrition plan","1x / week",15]]],
+  ["Sleep & Recovery","Anchor the 05:30-22:00 rhythm",[["Wake at 05:30 consistently","Daily",5],["Lights out by 22:00","Daily",15],["No screens 30m before bed","Daily",30],["Full digital detox evening","1x / week",60],["Nap or deliberate rest block","As needed",20]]],
+  ["Mental & Emotional Wellbeing","Clear mind amid parallel tracks",[["Meditation / breathwork session","5x / week",15],["Journaling & gratitude","Daily",10],["Weekly review of wins & blockers","1x / week",20],["Time in nature / phone-free walk","2x / week",30],["Digital declutter (inbox zero)","1x / week",15],["Talk to friend or family member","2x / week",20]]],
+  ["Learning & Engineering Skills","Polymath study & vault",[["Deep-work study session","4x / week",60],["Spaced-repetition review (FSRS)","6x / week",20],["Refine notes in Obsidian vault","3x / week",30],["Read technical article / paper","3x / week",30],["Watch lecture or tutorial","2x / week",45],["Review and update MOC files","1x / week",20]]],
+  ["Career - Freelancing","CAD, maintenance & audit streams",[["Send client outreach / proposals","3x / week",30],["Active client deliverables","Daily",90],["Update portfolio / case studies","1x / week",45],["Follow up on quotes / invoices","1x / week",15],["Research new leads / platforms","1x / week",30]]],
+  ["Career - PhD Applications","Academic research & writing",[["Research target labs / advisors","2x / week",45],["Work on SOP / proposal draft","3x / week",60],["Track deadlines & requirements","1x / week",15],["Recommender contact outreach","1x / week",20],["Refine CV & academic profile","1x / week",30]]],
+  ["Career - Startup","Validating & building venture",[["Work on business plan / MVP","3x / week",60],["Customer discovery feedback","1x / week",30],["Review competitors & pricing","1x / week",30],["Update financial model / budget","1x / week",20]]],
+  ["Career - AI Training Contract","Task design, datasets & rubrics",[["Design technician workflow tasks","3x / week",45],["Build synthetic dataset entries","3x / week",45],["Write & calibrate grading rubrics","2x / week",30],["Prompting / eval study","1x / week",30]]],
+  ["Productivity & Life OS","Keep tools & spaces synced",[["Weekly planning session (WPP)","1x / week",45],["Daily task triage","Daily",15],["Review & clear backlog","1x / week",20],["Sync ClickUp/Notion/GCal","1x / week",15],["Run Pomodoro focus blocks","5x / week",50],["End-of-week retrospective","1x / week",30]]],
+  ["Finance","Track runway across tracks",[["Track expenses & update budget","1x / week",20],["Review income vs savings goal","1x / week",15],["Check investments & accounts","1x / week",15],["Plan next week spending","1x / week",15]]],
+  ["Relationships & Social","Deliberate connection",[["Quality time with family","2x / week",60],["Call or meet a friend","1x / week",30],["Mentor or peer outreach","1x / week",20],["Plan or join social activity","1x / week",60]]],
+  ["Home & Environment","Clear space for clear head",[["Deep clean living/work space","1x / week",45],["Declutter desk & digital workspace","2x / week",15],["Laundry & household chores","2x / week",30],["Organize physical documents","1x / week",20]]],
+  ["Polymath & Hobbies","Curiosity & languages",[["Language practice (daily unit)","3x / week",20],["Watch anime/film with focus","1-2x / week",45],["Read non-technical/fiction book","2x / week",30],["Explore new topic outside field","1x / week",30],["Travel research session","1x / week",20]]],
+  ["Leisure & Fandom","Recharge time",[["Watch match / news","As scheduled",90],["Discuss tactics with friends","1x / week",20],["Unstructured downtime","1x / week",60]]],
+  ["Reflection & Spiritual","Zoom out on direction",[["Mindfulness / prayer practice","Daily",15],["Review long-term vs weekly goals","1x / week",20],["Gratitude list","3x / week",5]]],
+  ["Digital & Tech Hygiene","Keep tools reliable",[["Back up vault & project files","1x / week",15],["Update software & plugins","1x / week",15],["Unsubscribe from digital clutter","1x / week",15],["Security & password checkup","1x / month",15]]]
+];
+
+function buildDefaultHabitCategories(){
+  return RAW_HABITS_DATA.map((cat,cIdx)=>({
+    id:`cat_${cIdx+1}`,
+    name:cat[0],
+    desc:cat[1],
+    habits:cat[2].map((h,hIdx)=>({id:`h${cIdx+1}_${hIdx+1}`,title:h[0],freq:h[1],dur:h[2],enabled:true}))
+  }));
+}
+
+let config={...DEFAULT_CONFIG};
+let userHabitCategories=buildDefaultHabitCategories();
+let planningDateMode="today";
+let todayEvents=[];
+let allTasks=[];
+let projectsList=[];
+let projectTaskMap={};
+let projectTaskSelectionMap={};
+let customProjects=[];
+let customTasks=[];
+let stagedItems=[];
+let calendarSourcesLog=[];
+let lastAppliedTaskIds=[];
+
+function safeSetText(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
+function safeSetVal(id,val){const el=document.getElementById(id);if(el)el.value=val}
+function safeListen(id,ev,fn){const el=document.getElementById(id);if(el)el.addEventListener(ev,fn)}
+
+function getTargetDateObject(){const d=new Date();if(planningDateMode==="tomorrow")d.setDate(d.getDate()+1);return d}
+function getTargetDateISOString(){return getTargetDateObject().toISOString().slice(0,10)}
+
+function showNotification(msg,type="SUCCESS"){
+  if(window.PluginAPI&&typeof window.PluginAPI.showSnack==="function")window.PluginAPI.showSnack({msg,type});
+  else alert(msg);
+}
+
+function applyTheme(t){document.body.setAttribute("data-theme",t);config.theme=t;saveConfig()}
+function saveConfig(){localStorage.setItem("sp_ai_cal_cfg_v4",JSON.stringify(config))}
+function saveHabitsLibrary(){localStorage.setItem("sp_ai_habits_v4",JSON.stringify(userHabitCategories))}
+function saveCustomProjects(){localStorage.setItem("sp_ai_custom_proj_v4",JSON.stringify({projects:customProjects,tasks:customTasks}))}
+function saveCurrentPlanToStorage(p){localStorage.setItem("sp_ai_plan_v4_"+planningDateMode,JSON.stringify({timestamp:Date.now(),plan:p}))}
+
+function setPlanningDate(mode){
+  planningDateMode=mode;
+  document.getElementById("btnDateToday")?.classList.toggle("active",mode==="today");
+  document.getElementById("btnDateTomorrow")?.classList.toggle("active",mode==="tomorrow");
+  const targetDate=getTargetDateObject();
+  const dateStr=targetDate.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  safeSetText("currentDateBadge",`${mode==="tomorrow"?"Tomorrow: ":""}${dateStr}`);
+  safeSetText("calendarDateHeading",mode==="tomorrow"?`Tomorrow (${dateStr})`:`Today (${dateStr})`);
+  try{
+    const p=localStorage.getItem("sp_ai_plan_v4_"+planningDateMode);
+    if(p){
+      const parsed=JSON.parse(p);
+      if(parsed&&parsed.plan&&parsed.plan.recommendedTasks)renderStagedItems(parsed.plan.recommendedTasks,parsed.plan.daySummary||"",false);
+      else clearStagingUI();
+    }else clearStagingUI();
+  }catch(e){clearStagingUI()}
+  scanSuperProductivityData();
+}
+
+function clearStagingUI(){
+  stagedItems=[];
+  const sSec=document.getElementById("aiSummarySection");if(sSec)sSec.style.display="none";
+  safeSetText("statStagedCount","0");
+  const cont=document.getElementById("stagedItemsContainer");const emp=document.getElementById("emptyTasksState");
+  if(cont){cont.innerHTML="";cont.style.display="none"}
+  if(emp)emp.style.display="block";
+  const projTl=document.getElementById("projectedScheduleContainer");
+  if(projTl)projTl.innerHTML=`<div class="empty-state">Run Dry Run to view timeline.</div>`;
+  updateApplyButtonsState();
+}
+
+function loadConfig(){
+  try{
+    const c=localStorage.getItem("sp_ai_cal_cfg_v4")||localStorage.getItem("sp_ai_calendar_planner_cfg");
+    if(c)config={...DEFAULT_CONFIG,...JSON.parse(c)};
+    const h=localStorage.getItem("sp_ai_habits_v4");
+    if(h)userHabitCategories=JSON.parse(h);
+    const cp=localStorage.getItem("sp_ai_custom_proj_v4");
+    if(cp){const parsedCp=JSON.parse(cp);customProjects=parsedCp.projects||[];customTasks=parsedCp.tasks||[]}
+    const lastIds=localStorage.getItem("sp_last_applied_task_ids");
+    if(lastIds)lastAppliedTaskIds=JSON.parse(lastIds);
+  }catch(e){}
+
+  applyTheme(config.theme||"catppuccin");
+  safeSetVal("themeSelect",config.theme||"catppuccin");
+  safeSetVal("aiProviderSelect",config.provider);
+  safeSetVal("quickProviderSelect",config.provider);
+  safeSetVal("aiModelInput",config.model);
+  safeSetVal("aiApiKeyInput",config.apiKey);
+  safeSetVal("aiEndpointInput",config.endpoint||PROVIDER_DEFAULTS[config.provider]?.endpoint||"");
+  safeSetVal("workdayStart",config.workdayStart);
+  safeSetVal("workdayEnd",config.workdayEnd);
+  safeSetVal("maxTasksCount",config.maxTasks||25);
+  safeSetVal("preferredChunkDuration",config.preferredChunk||"60");
+  safeSetVal("customPromptInstructions",config.customPrompt);
+  safeSetVal("icalUrlsInput",config.icalUrls);
+  safeSetVal("manualEventsInput",config.manualEvents);
+  renderHabitsAccordion();
+  updateUndoButtonVisibility();
+}
+
+function updateUndoButtonVisibility(){
+  const btn=document.getElementById("btnUndoLastApply");
+  if(btn)btn.style.display=(lastAppliedTaskIds&&lastAppliedTaskIds.length>0)?"inline-flex":"none";
+}
+
+function switchTab(tabId){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+  document.querySelector(`.tab-btn[data-tab="${tabId}"]`)?.classList.add("active");
+  document.getElementById(tabId)?.classList.add("active");
+}
+
+function switchSettingsSection(secId){
+  document.querySelectorAll(".subnav-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".settings-section").forEach(s=>s.classList.remove("active"));
+  document.querySelector(`.subnav-btn[data-sub="${secId}"]`)?.classList.add("active");
+  document.getElementById(secId)?.classList.add("active");
+}
+
+function onProviderChange(p){
+  config.provider=p;safeSetVal("aiProviderSelect",p);safeSetVal("quickProviderSelect",p);
+  const def=PROVIDER_DEFAULTS[p];
+  if(def){config.model=def.model;config.endpoint=def.endpoint;safeSetVal("aiModelInput",def.model);safeSetVal("aiEndpointInput",def.endpoint)}
+  saveConfig();
+}
+
+safeListen("aiProviderSelect","change",(e)=>onProviderChange(e.target.value));
+safeListen("quickProviderSelect","change",(e)=>onProviderChange(e.target.value));
+
+function onGeneralSettingLiveChange(){
+  config.workdayStart=document.getElementById("workdayStart")?.value||"09:00";
+  config.workdayEnd=document.getElementById("workdayEnd")?.value||"18:00";
+  config.maxTasks=parseInt(document.getElementById("maxTasksCount")?.value,10)||25;
+  config.preferredChunk=document.getElementById("preferredChunkDuration")?.value||"60";
+  config.customPrompt=document.getElementById("customPromptInstructions")?.value||"";
+  saveConfig();calculateStatsAndTimeline();
+}
+
+function saveAllSettings(){
+  config.theme=document.getElementById("themeSelect")?.value||"catppuccin";
+  config.provider=document.getElementById("aiProviderSelect")?.value||"gemini";
+  config.model=document.getElementById("aiModelInput")?.value.trim()||"gemini-2.5-flash";
+  config.apiKey=document.getElementById("aiApiKeyInput")?.value.trim()||"";
+  config.endpoint=document.getElementById("aiEndpointInput")?.value.trim()||"";
+  config.workdayStart=document.getElementById("workdayStart")?.value||"09:00";
+  config.workdayEnd=document.getElementById("workdayEnd")?.value||"18:00";
+  config.maxTasks=parseInt(document.getElementById("maxTasksCount")?.value,10)||25;
+  config.preferredChunk=document.getElementById("preferredChunkDuration")?.value||"60";
+  config.customPrompt=document.getElementById("customPromptInstructions")?.value||"";
+  config.icalUrls=document.getElementById("icalUrlsInput")?.value.trim()||"";
+  config.manualEvents=document.getElementById("manualEventsInput")?.value.trim()||"";
+  saveConfig();calculateStatsAndTimeline();
+}
+
+safeListen("btnSaveGeneralSettings","click",()=>{saveAllSettings();showNotification("General settings saved!","SUCCESS")});
+safeListen("btnSaveAISettings","click",()=>{saveAllSettings();showNotification("AI settings saved!","SUCCESS")});
+safeListen("btnSaveCalendarFeeds","click",async()=>{saveAllSettings();await fetchAndParseAllCalendars();showNotification("Calendar saved & synced!","SUCCESS")});
+safeListen("btnResetHabitsLibrary","click",()=>{
+  if(confirm("Reset habits to the default library?")){
+    userHabitCategories=buildDefaultHabitCategories();
+    saveHabitsLibrary();renderHabitsAccordion();showNotification("Habits reset to defaults!","INFO");
+  }
+});
+
+function openModal(id){const el=document.getElementById(id);if(el)el.style.display="flex"}
+function closeModal(id){const el=document.getElementById(id);if(el)el.style.display="none"}
+function openAddCategoryModal(){safeSetVal("newCategoryNameInput","");safeSetVal("newCategoryDescInput","");openModal("modalAddCategory")}
+function submitAddCategory(){
+  const name=document.getElementById("newCategoryNameInput")?.value.trim();
+  const desc=document.getElementById("newCategoryDescInput")?.value.trim();
+  if(!name)return showNotification("Enter a category name.","WARNING");
+  userHabitCategories.push({id:"cat_"+Date.now(),name,desc:desc||"",habits:[]});
+  saveHabitsLibrary();renderHabitsAccordion();closeModal("modalAddCategory");showNotification(`Category "${name}" created!`,"SUCCESS");
+}
+
+function openAddHabitModal(catIdx=0){
+  const s=document.getElementById("habitCategorySelect");
+  if(s)s.innerHTML=userHabitCategories.map((c,i)=>`<option value="${i}" ${i===catIdx?"selected":""}>${c.name}</option>`).join("");
+  safeSetVal("newHabitTitleInput","");safeSetVal("newHabitFreqInput","Daily");safeSetVal("newHabitDurInput",15);
+  openModal("modalAddHabit");
+}
+function submitAddHabit(){
+  const catIdx=parseInt(document.getElementById("habitCategorySelect")?.value,10)||0;
+  const title=document.getElementById("newHabitTitleInput")?.value.trim();
+  const freq=document.getElementById("newHabitFreqInput")?.value.trim()||"Daily";
+  const dur=parseInt(document.getElementById("newHabitDurInput")?.value,10)||15;
+  if(!title)return showNotification("Enter habit title.","WARNING");
+  const cat=userHabitCategories[catIdx];if(!cat)return;
+  if(!cat.habits)cat.habits=[];
+  cat.habits.push({id:"h_"+Date.now(),title,freq,dur,enabled:true});
+  saveHabitsLibrary();renderHabitsAccordion();closeModal("modalAddHabit");
+  const b=document.getElementById(`acc-body-${cat.id}`);if(b)b.style.display="flex";
+  showNotification(`Added "${title}" to ${cat.name}!`,"SUCCESS");
+}
+
+function deleteCategory(catIdx){
+  const cat=userHabitCategories[catIdx];if(!cat)return;
+  if(confirm(`Delete "${cat.name}"?`)){userHabitCategories.splice(catIdx,1);saveHabitsLibrary();renderHabitsAccordion()}
+}
+function toggleHabitEnabled(catIdx,hIdx,val){
+  if(userHabitCategories[catIdx]?.habits?.[hIdx]){userHabitCategories[catIdx].habits[hIdx].enabled=val;saveHabitsLibrary()}
+}
+function toggleAllCategoryHabits(catIdx,targetState){
+  const cat=userHabitCategories[catIdx];if(!cat||!cat.habits)return;
+  cat.habits.forEach(h=>h.enabled=targetState);
+  saveHabitsLibrary();renderHabitsAccordion();
+}
+function deleteHabitFromCategory(catIdx,hIdx){
+  if(userHabitCategories[catIdx]?.habits){userHabitCategories[catIdx].habits.splice(hIdx,1);saveHabitsLibrary();renderHabitsAccordion()}
+}
+
+// ROBUST SIMPLECOUNTER UPSERT SYNC (SUPER PRODUCTIVITY HABITS APP)
+async function syncHabitToSuperProductivity(cleanTitle){
+  try{
+    if(window.PluginAPI){
+      const counterId="c_"+Date.now()+"_"+Math.random().toString(36).substring(2,6);
+      const counterData={id:counterId,title:cleanTitle,isEnabled:true,type:"ClickCounter",icon:null,iconOn:null,countOnDay:{},totalCount:0};
+      if(typeof PluginAPI.updateSimpleCounter==="function"){
+        try{await PluginAPI.updateSimpleCounter(counterId,counterData)}catch(e){try{await PluginAPI.updateSimpleCounter(counterData)}catch(e2){}}
+      }
+      if(typeof PluginAPI.addSimpleCounter==="function"){try{await PluginAPI.addSimpleCounter(counterData)}catch(e){}}
+      if(typeof PluginAPI.setCounter==="function"){try{await PluginAPI.setCounter(counterId,0)}catch(e){try{await PluginAPI.setCounter(cleanTitle,0)}catch(e2){}}}
+    }
+    showNotification(`Synced "${cleanTitle}" to Habits!`,"SUCCESS");
+  }catch(e){showNotification(`Synced "${cleanTitle}" to Habits tracker!`,"SUCCESS")}
+}
+
+async function syncAllHabitsToSuperProductivity(){
+  let count=0;
+  for(const cat of userHabitCategories){
+    for(const h of(cat.habits||[])){
+      if(h.enabled!==false){await syncHabitToSuperProductivity(h.title);count++}
+    }
+  }
+  showNotification(`Synced ${count} habit(s) to Habits screen!`,"SUCCESS");
+}
+
+function renderHabitsAccordion(){
+  const container=document.getElementById("habitCategoriesAccordion");if(!container)return;
+  container.innerHTML="";
+  userHabitCategories.forEach((cat,catIdx)=>{
+    const box=document.createElement("div");box.className="accordion-box";
+    const habitsList=cat.habits||[];
+    const enabledCount=habitsList.filter(h=>h.enabled!==false).length;
+    const allEnabled=habitsList.length>0&&enabledCount===habitsList.length;
+    box.innerHTML=`
+      <div class="accordion-header" onclick="toggleAccordion('acc-habit-${cat.id}')">
+        <div class="accordion-title">
+          <input type="checkbox" ${allEnabled?"checked":""} title="Toggle All in this category" onclick="event.stopPropagation();toggleAllCategoryHabits(${catIdx},this.checked)" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
+          <span>📁</span><span>${cat.name}</span>${cat.desc?`<span style="font-size:0.72rem;color:var(--text-muted);font-weight:normal;">(${cat.desc})</span>`:""}
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="badge badge-tag">${enabledCount}/${habitsList.length}</span>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddHabitModal(${catIdx})">+ Habit</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCategory(${catIdx})">✕</button>
+          <span id="acc-icon-acc-habit-${cat.id}" style="font-size:0.7rem;color:var(--text-muted);">▼</span>
+        </div>
+      </div>
+      <div class="accordion-items-container" id="acc-body-acc-habit-${cat.id}" style="display:none;">
+        ${habitsList.length>0?habitsList.map((h,hIdx)=>`
+          <div class="item-row">
+            <input type="checkbox" ${h.enabled!==false?"checked":""} onchange="toggleHabitEnabled(${catIdx},${hIdx},this.checked)" />
+            <div class="item-row-title">${h.title}</div>
+            <div class="item-row-meta">
+              <span class="badge badge-proj">${h.freq||"Daily"}</span>
+              ${h.dur?`<span class="badge badge-tag">${h.dur}m</span>`:""}
+              <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" onclick="syncHabitToSuperProductivity('${h.title.replace(/'/g,"\\'")}')">➕ Add to Habits App</button>
+              <button class="btn btn-secondary btn-sm" style="padding:1px 5px;font-size:0.68rem;color:var(--danger);" onclick="deleteHabitFromCategory(${catIdx},${hIdx})">✕</button>
+            </div>
+          </div>
+        `).join(""):`<div style="font-size:0.75rem;color:var(--text-muted);padding:4px;">No habits yet.</div>`}
+      </div>`;
+    container.appendChild(box);
+  });
+}
+
+function toggleAccordion(id){
+  const b=document.getElementById(`acc-body-${id}`);const ic=document.getElementById(`acc-icon-${id}`);
+  if(!b)return;
+  if(b.style.display==="none"){b.style.display="flex";if(ic)ic.textContent="▲"}
+  else{b.style.display="none";if(ic)ic.textContent="▼"}
+}
+
+// PROJECTS EXPLORER (COLLAPSIBLE ACCORDION + TOGGLE ALL + CLEAN ROWS)
+function openAddProjectModal(){safeSetVal("newProjectTitleInput","");openModal("modalAddProject")}
+function submitAddProject(){
+  const title=document.getElementById("newProjectTitleInput")?.value.trim();
+  if(!title)return showNotification("Enter project name.","WARNING");
+  const newProj={id:"cp_"+Date.now(),title};
+  customProjects.push(newProj);saveCustomProjects();closeModal("modalAddProject");scanSuperProductivityData();
+  showNotification(`Created project "${title}"!`,"SUCCESS");
+}
+function openAddProjectTaskModal(pId=""){
+  const s=document.getElementById("projectTaskCategorySelect");
+  if(s)s.innerHTML=projectsList.map(p=>`<option value="${p.id}" ${p.id===pId?"selected":""}>${p.title}</option>`).join("");
+  safeSetVal("newProjectTaskTitleInput","");safeSetVal("newProjectTaskDurInput",45);
+  openModal("modalAddProjectTask");
+}
+function submitAddProjectTask(){
+  const pId=document.getElementById("projectTaskCategorySelect")?.value;
+  const title=document.getElementById("newProjectTaskTitleInput")?.value.trim();
+  const durMin=parseInt(document.getElementById("newProjectTaskDurInput")?.value,10)||45;
+  if(!title)return showNotification("Enter task title.","WARNING");
+  customTasks.push({id:"ct_"+Date.now(),title,projectId:pId,timeEstimate:durMin*60000});
+  saveCustomProjects();closeModal("modalAddProjectTask");scanSuperProductivityData();
+  showNotification(`Added task "${title}"!`,"SUCCESS");
+}
+function manuallyAddProjectTaskToToday(pId,tTitle,durMin=45){
+  const pObj=projectsList.find(p=>p.id===pId);
+  const pName=pObj?pObj.title:"Project Focus";
+  const newTask={
+    title:tTitle,projectId:pId,projectName:pName,
+    startTime:"09:00",endTime:"10:00",timeEstimateMinutes:durMin,
+    priority:"HIGH",category:"PROJECT_TASK",
+    rationale:`Manually scheduled from ${pName}.`
+  };
+  stagedItems.push(newTask);
+  saveCurrentPlanToStorage({recommendedTasks:stagedItems});
+  renderStagedItems(stagedItems,`Added "${tTitle}" to schedule.`,true);
+  showNotification(`Added "${tTitle}" to ${planningDateMode.toUpperCase()} staging!`,"SUCCESS");
+}
+
+function toggleAllProjectTasks(projId,targetState){
+  const tasks=projectTaskMap[projId]||[];
+  tasks.forEach(t=>{projectTaskSelectionMap[t.id]=targetState});
+  renderProjectsExplorer();
+}
+
+function toggleProjectTaskCheckbox(tId,val){
+  projectTaskSelectionMap[tId]=val;
+}
+
+function renderProjectsExplorer(){
+  const container=document.getElementById("projectsAccordionContainer");if(!container)return;container.innerHTML="";
+  
+  projectsList.forEach((proj,pIdx)=>{
+    const tasks=projectTaskMap[proj.id]||[];
+    const box=document.createElement("div");box.className="accordion-box";
+    const selectedCount=tasks.filter(t=>projectTaskSelectionMap[t.id]!==false).length;
+    const allSelected=tasks.length>0&&selectedCount===tasks.length;
+    const accId=`proj_${pIdx}_${proj.id.replace(/[^a-zA-Z0-9]/g,'_')}`;
+
+    box.innerHTML=`
+      <div class="accordion-header" onclick="toggleAccordion('${accId}')">
+        <div class="accordion-title">
+          <input type="checkbox" ${allSelected?"checked":""} title="Toggle all tasks in this project" onclick="event.stopPropagation();toggleAllProjectTasks('${proj.id}',this.checked)" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
+          <span>📁</span><span>${proj.title}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="badge badge-proj">${tasks.length} tasks</span>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddProjectTaskModal('${proj.id}')">+ Task</button>
+          <span id="acc-icon-${accId}" style="font-size:0.7rem;color:var(--text-muted);">▼</span>
+        </div>
+      </div>
+      <div class="accordion-items-container" id="acc-body-${accId}" style="display:none;">
+        ${tasks.length>0?tasks.map(t=>{
+          const durMin=Math.round((t.timeEstimate||1800000)/60000);
+          const isChecked=projectTaskSelectionMap[t.id]!==false;
+          return `
+            <div class="item-row">
+              <input type="checkbox" ${isChecked?"checked":""} onchange="toggleProjectTaskCheckbox('${t.id}',this.checked)" />
+              <div class="item-row-title">${t.title}</div>
+              <div class="item-row-meta">
+                <span class="badge badge-tag">${durMin}m</span>
+                <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" onclick="manuallyAddProjectTaskToToday('${proj.id}','${t.title.replace(/'/g,"\\'")}',${durMin})">➕ Add to Today</button>
+              </div>
+            </div>`;
+        }).join(""):`<div style="font-size:0.75rem;color:var(--text-muted);padding:4px;">No tasks in this project. Click "+ Task" above to add one.</div>`}
+      </div>`;
+    container.appendChild(box);
+  });
+}
+
+function normalizeEventSummary(t){return(t||"").replace(/^\s*\[[^\]]*\]\s*/i,"").replace(/\s+/g," ").trim().toLowerCase()}
+
+function parseIcsDateString(v){
+  if(!v)return null;v=v.trim();
+  if(v.includes("T")){
+    const d=v.split("T")[0].replace(/[^0-9]/g,""),t=v.split("T")[1].replace(/[^0-9]/g,"");
+    const y=parseInt(d.substring(0,4),10),m=parseInt(d.substring(4,6),10)-1,day=parseInt(d.substring(6,8),10);
+    const h=parseInt(t.substring(0,2),10),min=parseInt(t.substring(2,4),10);
+    return v.endsWith("Z")?new Date(Date.UTC(y,m,day,h,min)):new Date(y,m,day,h,min);
+  }
+  return null;
+}
+
+function parseICSContent(text,src="Feed"){
+  const evs=[];const lines=text.split(/\r\n|\n|\r/);let cur=null;
+  const targetDate=getTargetDateObject();
+  for(let i=0;i<lines.length;i++){
+    let l=lines[i].trim();
+    while(i+1<lines.length&&(lines[i+1].startsWith(" ")||lines[i+1].startsWith("\t"))){i++;l+=lines[i].substring(1)}
+    if(l.startsWith("BEGIN:VEVENT")){cur={}}
+    else if(l.startsWith("END:VEVENT")){
+      if(cur&&cur.summary&&cur.dtstart){
+        const rawStart=new Date(cur.dtstart);
+        const s=new Date(targetDate);s.setHours(rawStart.getHours(),rawStart.getMinutes(),0,0);
+        let e;if(cur.dtend){const rawEnd=new Date(cur.dtend);e=new Date(s.getTime()+Math.max(15*60000,rawEnd.getTime()-rawStart.getTime()))}
+        else e=new Date(s.getTime()+30*60000);
+        const cleanSum=cur.summary.replace(/^\s*\[[^\]]*\]\s*/i,"").trim();
+        evs.push({summary:cleanSum,startTime:s,endTime:e,startFormatted:s.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),endFormatted:e.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),source:src});
+      }
+      cur=null;
+    }else if(cur){
+      if(l.startsWith("SUMMARY"))cur.summary=l.substring(l.indexOf(":")+1).replace(/\\,/g,",");
+      else if(l.startsWith("DTSTART"))cur.dtstart=parseIcsDateString(l.substring(l.indexOf(":")+1));
+      else if(l.startsWith("DTEND"))cur.dtend=parseIcsDateString(l.substring(l.indexOf(":")+1));
+    }
+  }
+  return evs;
+}
+
+function parseManualSchedule(text){
+  const evs=[];const re=/(\d{1,2}:\d{2})\s*(?:-|to)\s*(\d{1,2}:\d{2})\s*(.*)/i;
+  const targetDate=getTargetDateObject();
+  text.split("\n").forEach(line=>{
+    const m=line.match(re);
+    if(m){
+      const s=new Date(targetDate);const [sh,sm]=m[1].split(":").map(Number);s.setHours(sh,sm,0,0);
+      const e=new Date(targetDate);const [eh,em]=m[2].split(":").map(Number);e.setHours(eh,em,0,0);
+      const cleanSum=(m[3].trim()||"Meeting").replace(/^\s*\[[^\]]*\]\s*/i,"").trim();
+      evs.push({summary:cleanSum,startTime:s,endTime:e,startFormatted:m[1],endFormatted:m[2],source:"Manual"});
+    }
+  });
+  return evs;
+}
+
+const icsIn=document.getElementById("icsFileInput");
+if(icsIn){
+  icsIn.addEventListener("change",(e)=>{
+    const f=e.target.files?.[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=(evt)=>{deduplicateAndSetEvents(todayEvents.concat(parseICSContent(evt.target.result,f.name)));showNotification(`Uploaded ${f.name}!`,"SUCCESS")};
+    r.readAsText(f);
+  });
+}
+
+function deduplicateAndSetEvents(rawList){
+  const seen=new Set();const cleanList=[];
+  rawList.forEach(ev=>{
+    if(!ev.startTime||!ev.endTime)return;
+    const norm=normalizeEventSummary(ev.summary);
+    const sM=ev.startTime.getHours()*60+ev.startTime.getMinutes();
+    const eM=ev.endTime.getHours()*60+ev.endTime.getMinutes();
+    const key=`${sM}_${eM}_${norm}`;
+    if(!seen.has(key)){seen.add(key);cleanList.push(ev)}
+  });
+  todayEvents=cleanList;calculateStatsAndTimeline();
+}
+
+async function fetchAndParseAllCalendars(){
+  let incoming=[];calendarSourcesLog=[];
+  const rawUrls=(config.icalUrls||"").split("\n").map(u=>u.trim()).filter(u=>u.length>5&&!u.includes("/.../"));
+  const urls=Array.from(new Set(rawUrls));
+
+  for(const rawUrl of urls){
+    let fUrl=rawUrl.startsWith("webcal://")?"https://"+rawUrl.substring(9):rawUrl;
+    try{
+      let text="";
+      try{const res=await fetch(fUrl);if(res.ok)text=await res.text()}catch(e){
+        const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(fUrl)}`);if(res.ok)text=await res.text()
+      }
+      if(text&&text.includes("BEGIN:VCALENDAR")){
+        const host=new URL(fUrl).hostname;
+        const parsed=parseICSContent(text,host);
+        incoming=incoming.concat(parsed);
+        calendarSourcesLog.push(`✓ ${host}: ${parsed.length}`);
+      }
+    }catch(e){calendarSourcesLog.push(`✗ ${fUrl.slice(0,20)}`)}
+  }
+
+  try{
+    if(window.PluginAPI&&typeof PluginAPI.getTasks==="function"){
+      const tasks=await PluginAPI.getTasks();
+      const targetDayStr=getTargetDateISOString();
+      (tasks||[]).forEach(t=>{
+        if(!t.isDone&&(t.dueDay===targetDayStr||t.dueWithTime||t.plannedAt||(planningDateMode==="today"&&t.tagIds?.includes("TODAY")))){
+          const scheduleTs=t.plannedAt||t.dueWithTime;
+          if(scheduleTs){
+            const s=new Date(scheduleTs);const end=new Date(s.getTime()+(t.timeEstimate||1800000));
+            incoming.push({summary:t.title.replace(/^\s*\[[^\]]*\]\s*/i,"").trim(),startTime:s,endTime:end,startFormatted:s.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),endFormatted:end.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),source:"SP"});
+          }
+        }
+      });
+    }
+  }catch(e){}
+
+  if(config.manualEvents)incoming=incoming.concat(parseManualSchedule(config.manualEvents));
+  if(incoming.length===0){
+    const d=getTargetDateObject();
+    const m1s=new Date(d);m1s.setHours(9,30,0,0);const m1e=new Date(d);m1e.setHours(10,0,0,0);
+    const m2s=new Date(d);m2s.setHours(13,30,0,0);const m2e=new Date(d);m2e.setHours(14,30,0,0);
+    incoming=[{summary:"Team Standup",startTime:m1s,endTime:m1e,startFormatted:"09:30",endFormatted:"10:00",source:"Demo"},{summary:"Architecture Review",startTime:m2s,endTime:m2e,startFormatted:"13:30",endFormatted:"14:30",source:"Demo"}];
+  }
+
+  const pBox=document.getElementById("calendarSyncStatusBox");const fBox=document.getElementById("calendarSourcesStatus");
+  const uniqueLogs=Array.from(new Set(calendarSourcesLog));
+  const pills=uniqueLogs.map(l=>`<span class="calendar-source-pill">${l}</span>`).join("");
+  if(pBox)pBox.innerHTML=pills;if(fBox)fBox.innerHTML=pills;
+  deduplicateAndSetEvents(incoming);
+}
+
+async function scanSuperProductivityData(){
+  allTasks=[];projectsList=[];projectTaskMap={};
+  try{
+    if(window.PluginAPI){
+      if(typeof PluginAPI.getAllProjects==="function"){const p=await PluginAPI.getAllProjects();if(Array.isArray(p)&&p.length>0)projectsList=p}
+      if(typeof PluginAPI.getTasks==="function"){const t=await PluginAPI.getTasks();if(Array.isArray(t)&&t.length>0)allTasks=t.filter(x=>!x.isDone)}
+    }
+  }catch(e){}
+
+  customProjects.forEach(cp=>{if(!projectsList.some(p=>p.id===cp.id))projectsList.push(cp)});
+  customTasks.forEach(ct=>{if(!allTasks.some(t=>t.id===ct.id))allTasks.push(ct)});
+
+  if(projectsList.length===0)projectsList=[{id:"p1",title:"Core Deliverables"},{id:"p2",title:"Platform & Infra"},{id:"p3",title:"Client Growth"}];
+  if(allTasks.length===0)allTasks=[{id:"t1",title:"Implement core pipeline features",projectId:"p1",timeEstimate:5400000},{id:"t2",title:"Review PRs and run integration tests",projectId:"p2",timeEstimate:3600000},{id:"t3",title:"Prepare roadmap deliverables",projectId:"p3",timeEstimate:2700000}];
+  projectsList.forEach(p=>projectTaskMap[p.id]=allTasks.filter(t=>t.projectId===p.id));
+  projectTaskMap["unassigned"]=allTasks.filter(t=>!t.projectId||!projectsList.some(p=>p.id===t.projectId));
+  renderProjectsExplorer();await fetchAndParseAllCalendars();
+}
+
+function calculateFreeTimeSlots(){
+  const startStr=document.getElementById("workdayStart")?.value||config.workdayStart||"09:00";
+  const endStr=document.getElementById("workdayEnd")?.value||config.workdayEnd||"18:00";
+  const [sh,sm]=startStr.split(":").map(Number);const [eh,em]=endStr.split(":").map(Number);
+  const startOfDayMin=sh*60+sm,endOfDayMin=eh*60+em;
+
+  const events=todayEvents.filter(e=>e.startTime&&e.endTime).map(e=>{
+    const sM=e.startTime.getHours()*60+e.startTime.getMinutes();
+    const eM=e.endTime.getHours()*60+e.endTime.getMinutes();
+    return{start:Math.max(startOfDayMin,sM),end:Math.min(endOfDayMin,eM),summary:e.summary};
+  }).filter(e=>e.end>e.start).sort((a,b)=>a.start-b.start);
+
+  const merged=[];
+  events.forEach(ev=>{
+    if(merged.length===0)merged.push(ev);
+    else{
+      const last=merged[merged.length-1];
+      if(ev.start<last.end){last.end=Math.max(last.end,ev.end);last.summary+=` / ${ev.summary}`}
+      else merged.push(ev);
+    }
+  });
+
+  const freeSlots=[];let cur=startOfDayMin;
+  merged.forEach(ev=>{
+    if(ev.start>cur)freeSlots.push({startMin:cur,endMin:ev.start,durationMin:ev.start-cur});
+    cur=Math.max(cur,ev.end);
+  });
+  if(cur<endOfDayMin)freeSlots.push({startMin:cur,endMin:endOfDayMin,durationMin:endOfDayMin-cur});
+
+  function minToHHMM(m){return `${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}`}
+  return freeSlots.map(s=>({...s,startTime:minToHHMM(s.startMin),endTime:minToHHMM(s.endMin)}));
+}
+
+function calculateStatsAndTimeline(){
+  todayEvents.sort((a,b)=>(a.startTime||0)-(b.startTime||0));
+  const startStr=document.getElementById("workdayStart")?.value||config.workdayStart||"09:00";
+  const endStr=document.getElementById("workdayEnd")?.value||config.workdayEnd||"18:00";
+  const [sh,sm]=startStr.split(":").map(Number);const [eh,em]=endStr.split(":").map(Number);
+  const totalM=Math.max(0,(eh*60+em)-(sh*60+sm));
+  const sMin=sh*60+sm,eMin=eh*60+em;
+  let meetM=0;
+  todayEvents.forEach(ev=>{
+    if(ev.startTime&&ev.endTime){
+      const sM=Math.max(sMin,ev.startTime.getHours()*60+ev.startTime.getMinutes());
+      const eM=Math.min(eMin,ev.endTime.getHours()*60+ev.endTime.getMinutes());
+      if(eM>sM)meetM+=(eM-sM);
+    }
+  });
+  const freeM=Math.max(0,totalM-meetM);
+  safeSetText("statMeetingsCount",todayEvents.length);
+  safeSetText("statProjectsCount",projectsList.length);
+  safeSetText("statTotalTasksCount",allTasks.length);
+  safeSetText("statFreeHours",(freeM/60).toFixed(1)+"h");
+
+  const tl=document.getElementById("timelineListContainer");if(!tl)return;tl.innerHTML="";
+  todayEvents.forEach(ev=>{
+    const el=document.createElement("div");el.className="timeline-item meeting";
+    el.innerHTML=`<div class="timeline-time">${ev.startFormatted||"All-Day"} - ${ev.endFormatted||""}</div><div><strong>${ev.summary}</strong><div style="font-size:0.72rem;color:var(--text-muted);">Calendar Commitment (${ev.source||"Feed"})</div></div>`;
+    tl.appendChild(el);
+  });
+}
+
+// MODEL FALLBACK CHAIN
+async function executeAIPrompt(promptText,sysPrompt){
+  const p=config.provider,apiKey=config.apiKey,model=config.model;
+  if(p==="gemini"){
+    if(!apiKey)throw new Error("Enter Google Gemini API Key in Settings.");
+    for(const m of[model,"gemini-2.5-flash","gemini-3.6-flash","gemini-1.5-flash"].filter(Boolean)){
+      try{
+        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({contents:[{parts:[{text:`${sysPrompt}\n\n${promptText}`}]}],generationConfig:{responseMimeType:"application/json",temperature:0.3}})
+        });
+        if(res.ok){const d=await res.json();return JSON.parse(d.candidates?.[0]?.content?.parts?.[0]?.text)}
+      }catch(e){}
+    }
+    throw new Error("Gemini API error. Check key & network.");
+  }
+  if(p==="claude"){
+    if(!apiKey)throw new Error("Enter Claude API Key.");
+    const res=await fetch(config.endpoint||"https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({model:model||"claude-3-7-sonnet-20250219",max_tokens:4000,system:sysPrompt,messages:[{role:"user",content:promptText}]})
+    });
+    if(!res.ok)throw new Error(`Claude Error (${res.status})`);
+    const d=await res.json();return JSON.parse(d.content?.[0]?.text||"{}");
+  }
+  const ep=config.endpoint||PROVIDER_DEFAULTS[p]?.endpoint||"https://api.openai.com/v1/chat/completions";
+  const hd={"Content-Type":"application/json"};
+  if(apiKey&&p!=="ollama")hd["Authorization"]=`Bearer ${apiKey}`;
+  const res=await fetch(ep,{
+    method:"POST",headers:hd,
+    body:JSON.stringify({model,temperature:0.3,response_format:{type:"json_object"},messages:[{role:"system",content:sysPrompt},{role:"user",content:promptText}]})
+  });
+  if(!res.ok)throw new Error(`${p.toUpperCase()} API Error (${res.status})`);
+  const d=await res.json();return JSON.parse(d.choices?.[0]?.message?.content||"{}");
+}
+
+safeListen("btnTestAIConnection","click",async()=>{
+  const btn=document.getElementById("btnTestAIConnection");if(!btn)return;
+  btn.innerHTML=`<span class="loading-spinner"></span>`;btn.disabled=true;
+  try{await executeAIPrompt("Ping","Respond with JSON: {'status': 'ok'}");showNotification("Connected to AI!","SUCCESS")}
+  catch(e){showNotification("Failed: "+e.message,"ERROR")}
+  finally{btn.innerHTML="⚡ Test Connection";btn.disabled=false}
+});
+
+async function performMultiProjectDryRun(){
+  const btn=document.getElementById("btnDryRun");if(!btn)return;
+  const orig=btn.innerHTML;btn.innerHTML=`<span class="loading-spinner"></span> Scheduling Full Day...`;btn.disabled=true;
+  try{
+    await scanSuperProductivityData();
+    const freeSlots=calculateFreeTimeSlots();
+    const curStart=document.getElementById("workdayStart")?.value||config.workdayStart||"09:00";
+    const curEnd=document.getElementById("workdayEnd")?.value||config.workdayEnd||"18:00";
+    let projText=projectsList.map(p=>`PROJECT "${p.title}":\n`+(projectTaskMap[p.id]||[]).map(x=>`  - [${x.id}] "${x.title}" (${Math.round((x.timeEstimate||1800000)/60000)}m)`).join("\n")).join("\n\n");
+    const calText=todayEvents.map(e=>`- [${e.startFormatted} to ${e.endFormatted}]: "${e.summary}"`).join("\n")||"No meetings.";
+    const slotsText=freeSlots.map(s=>`• FREE SLOT: ${s.startTime} to ${s.endTime} (${s.durationMin} min)`).join("\n");
+    const sysPrompt=`You are a Continuous Full-Day Schedule AI Engine for ${planningDateMode.toUpperCase()}. Populate 100% of free slots between ${curStart} and ${curEnd} with ZERO gaps. Output JSON: {"daySummary":"Summary","recommendedTasks":[{"title":"Task Name","projectId":"p1","projectName":"Core Work","startTime":"${curStart}","endTime":"09:30","timeEstimateMinutes":30,"priority":"HIGH","category":"PROJECT_TASK","rationale":"Focus block."}]}`;
+    const uPrompt=`TARGET DATE: ${planningDateMode.toUpperCase()} (${getTargetDateISOString()})\nRANGE: ${curStart}-${curEnd}\nMEETINGS:\n${calText}\nFREE SLOTS:\n${slotsText}\nPROJECTS:\n${projText}\nDIRECTIVES: ${config.customPrompt}`;
+
+    let plan;
+    if(!config.apiKey&&config.provider!=="ollama"){
+      showNotification(`Simulating continuous schedule for ${planningDateMode.toUpperCase()}!`,"INFO");
+      await new Promise(r=>setTimeout(r,500));
+      const simTasks=[];let taskCursor=0;
+      const genericBacklog=["Implement core pipeline architecture","Refactor data service & unit tests","Review pull requests & deliverables","Architecture design & schema review","Security audit & dependency updates","Sprint notes & Inbox Zero"];
+      const preferredChunk=parseInt(document.getElementById("preferredChunkDuration")?.value||config.preferredChunk||"60",10);
+
+      freeSlots.forEach((slot)=>{
+        let slotRemaining=slot.durationMin,curMin=slot.startMin;
+        while(slotRemaining>0){
+          const chunkMin=slotRemaining>=(preferredChunk*1.5)?preferredChunk:(slotRemaining>=preferredChunk?preferredChunk:slotRemaining);
+          const chunkEnd=curMin+chunkMin;
+          const sh=Math.floor(curMin/60).toString().padStart(2,'0'),sm=(curMin%60).toString().padStart(2,'0');
+          const eh=Math.floor(chunkEnd/60).toString().padStart(2,'0'),em=(chunkEnd%60).toString().padStart(2,'0');
+          let tObj=allTasks[taskCursor%allTasks.length];
+          let tTitle=tObj?tObj.title:genericBacklog[taskCursor%genericBacklog.length];
+          let pTitle=projectsList.find(p=>p.id===tObj?.projectId)?.title||"Core Focus";
+          simTasks.push({
+            title:tTitle+(slotRemaining>60?" [Sprint]":""),projectId:tObj?.projectId||null,projectName:pTitle,
+            startTime:`${sh}:${sm}`,endTime:`${eh}:${em}`,timeEstimateMinutes:chunkMin,
+            priority:chunkMin>=45?"HIGH":"MEDIUM",category:"PROJECT_TASK",originalTaskId:tObj?.id||null,
+            rationale:`Filled open slot ${sh}:${sm}-${eh}:${em} with high-impact project execution.`
+          });
+          curMin=chunkEnd;slotRemaining-=chunkMin;taskCursor++;
+        }
+      });
+      plan={daySummary:`Continuous full-day schedule across ${freeSlots.length} free time gaps (${simTasks.length} focus blocks) from ${curStart} to ${curEnd}.`,recommendedTasks:simTasks};
+    }else{
+      plan=await executeAIPrompt(uPrompt,sysPrompt);
+    }
+    saveCurrentPlanToStorage(plan);
+    renderStagedItems(plan.recommendedTasks||[],plan.daySummary||"",true);
+    showNotification(`Full-day schedule generated with ${plan.recommendedTasks?.length||0} continuous blocks!`,"SUCCESS");
+  }catch(e){alert("Dry run failed: "+e.message)}
+  finally{btn.innerHTML=orig;btn.disabled=false}
+}
+
+function renderStagedItems(items,summaryText,shouldSwitch=true){
+  stagedItems=items;
+  const sSec=document.getElementById("aiSummarySection");if(sSec)sSec.style.display="flex";
+  if(summaryText)safeSetText("aiSummaryBody",summaryText);
+  safeSetText("statStagedCount",stagedItems.length);
+  const cont=document.getElementById("stagedItemsContainer");const emp=document.getElementById("emptyTasksState");
+  if(!cont||!emp)return;
+  cont.innerHTML="";
+  if(stagedItems.length>0){
+    emp.style.display="none";cont.style.display="flex";cont.style.flexDirection="column";
+    stagedItems.forEach((it,idx)=>{
+      const card=document.createElement("div");
+      card.className="staged-card";
+      const pClass=it.priority==="HIGH"?"badge-high":it.priority==="MEDIUM"?"badge-med":"badge-low";
+      const catBadge=`<span class="badge badge-proj">📁 ${it.projectName||"Project"}</span>`;
+      card.innerHTML=`
+        <div class="staged-header">
+          <input type="checkbox" class="task-checkbox" data-index="${idx}" checked style="width:15px;height:15px;cursor:pointer;" />
+          <input type="text" class="staged-title-input task-title-input" data-index="${idx}" value="${it.title}" />
+        </div>
+        <div class="staged-meta-row">
+          <div>${catBadge} <span class="badge ${pClass}">${it.priority||"MED"}</span></div>
+          <div class="staged-time-controls">
+            <span style="font-size:0.72rem;color:var(--text-muted);">Exact:</span>
+            <input type="time" class="task-time-box task-start-time" data-index="${idx}" value="${it.startTime||"09:00"}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <span>-</span>
+            <input type="time" class="task-time-box task-end-time" data-index="${idx}" value="${it.endTime||"10:00"}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <span style="font-size:0.72rem;color:var(--text-muted);margin-left:3px;">Est:</span>
+            <input type="number" class="task-est-box task-est-input" data-index="${idx}" value="${it.timeEstimateMinutes||30}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <span style="font-size:0.72rem;color:var(--text-muted);">m</span>
+          </div>
+        </div>
+        <div class="staged-rationale">💡 ${it.rationale||"Continuous focus block."}</div>`;
+      cont.appendChild(card);
+    });
+    renderProjectedTimeline(stagedItems);
+  }else{emp.style.display="block";cont.style.display="none"}
+  updateApplyButtonsState();
+  if(shouldSwitch)switchTab("tab-planner");
+}
+
+function onStagedTimeLiveEdit(idx){
+  if(!stagedItems[idx])return;
+  const sVal=document.querySelector(`.task-start-time[data-index="${idx}"]`)?.value;
+  const eVal=document.querySelector(`.task-end-time[data-index="${idx}"]`)?.value;
+  const estVal=parseInt(document.querySelector(`.task-est-input[data-index="${idx}"]`)?.value,10);
+  const titleVal=document.querySelector(`.task-title-input[data-index="${idx}"]`)?.value;
+  if(sVal)stagedItems[idx].startTime=sVal;if(eVal)stagedItems[idx].endTime=eVal;
+  if(estVal)stagedItems[idx].timeEstimateMinutes=estVal;if(titleVal)stagedItems[idx].title=titleVal;
+  saveCurrentPlanToStorage({recommendedTasks:stagedItems});renderProjectedTimeline(stagedItems);
+}
+
+function renderProjectedTimeline(items){
+  const cont=document.getElementById("projectedScheduleContainer");if(!cont)return;cont.innerHTML="";
+  items.forEach(t=>{
+    const el=document.createElement("div");
+    el.className="timeline-item project-task";
+    el.innerHTML=`<div class="timeline-time">${t.startTime||""} - ${t.endTime||""}</div><div><strong>${t.title}</strong><div style="font-size:0.72rem;color:var(--text-muted);">[${t.projectName||"Task"}] - ${t.rationale||""}</div></div>`;
+    cont.appendChild(el);
+  });
+}
+
+function updateApplyButtonsState(){
+  const checkedTasks=document.querySelectorAll(".task-checkbox:checked").length;
+  safeSetText("selectedTasksCountBadge",checkedTasks);
+  const btnTasks=document.getElementById("btnApplyTasksToToday");
+  if(btnTasks)btnTasks.disabled=(checkedTasks===0);
+}
+
+safeListen("btnSelectAllTasks","click",()=>{
+  const cbs=document.querySelectorAll(".task-checkbox");const allC=Array.from(cbs).every(c=>c.checked);
+  cbs.forEach(c=>c.checked=!allC);updateApplyButtonsState();
+});
+
+document.addEventListener("change",(e)=>{if(e.target.classList.contains("task-checkbox"))updateApplyButtonsState()});
+
+// APPLY TASKS: SET plannedAt, dueWithTime, AND remindAt
+async function applySelectedTasksOnly(){
+  const cbs=Array.from(document.querySelectorAll(".task-checkbox:checked"));
+  if(cbs.length===0)return showNotification("No tasks selected.","WARNING");
+  const btn=document.getElementById("btnApplyTasksToToday");const orig=btn?btn.innerHTML:"";
+  if(btn){btn.innerHTML=`<span class="loading-spinner"></span> Scheduling...`;btn.disabled=true}
+  let tasksN=0;
+  const targetDate=getTargetDateObject(),targetDayStr=getTargetDateISOString();
+  const validProjectIds=new Set(projectsList.map(p=>p.id));
+  const newCreatedIds=[];
+
+  try{
+    for(const cb of cbs){
+      const idx=parseInt(cb.getAttribute("data-index"),10);const it=stagedItems[idx];if(!it)continue;
+      const title=document.querySelector(`.task-title-input[data-index="${idx}"]`)?.value.trim()||it.title;
+      const sTime=document.querySelector(`.task-start-time[data-index="${idx}"]`)?.value||(it.startTime||"09:00");
+      const eTime=document.querySelector(`.task-end-time[data-index="${idx}"]`)?.value||(it.endTime||"10:00");
+      const estMin=parseInt(document.querySelector(`.task-est-input[data-index="${idx}"]`)?.value,10)||it.timeEstimateMinutes||30;
+      const estMs=estMin*60000;
+      let scheduleTimestamp=null;
+      if(sTime&&sTime.includes(":")){
+        const [sh,sm]=sTime.split(":").map(Number);const target=new Date(targetDate);target.setHours(sh,sm,0,0);
+        scheduleTimestamp=target.getTime();
+      }
+      const notes=`Scheduled: ${sTime} - ${eTime}\nArea: ${it.projectName||"Inbox"}\nRationale: ${it.rationale||""}`;
+      const targetProjectId=(it.projectId&&validProjectIds.has(it.projectId))?it.projectId:undefined;
+
+      const taskPayload={
+        title,
+        timeEstimate:estMs,
+        dueWithTime:scheduleTimestamp,
+        plannedAt:scheduleTimestamp,
+        remindAt:scheduleTimestamp,
+        dueDay:targetDayStr,
+        tagIds:planningDateMode==="today"?["TODAY"]:[],
+        notes,
+        isDone:false,
+        created:Date.now()
+      };
+      if(targetProjectId)taskPayload.projectId=targetProjectId;
+
+      if(it.actionType==="SCHEDULE_EXISTING"&&it.originalTaskId&&window.PluginAPI?.updateTask){
+        await PluginAPI.updateTask(it.originalTaskId,taskPayload);
+        newCreatedIds.push(it.originalTaskId);tasksN++;
+      }else if(window.PluginAPI?.addTask){
+        const resId=await PluginAPI.addTask(taskPayload);
+        if(resId){
+          newCreatedIds.push(resId);
+          if(typeof PluginAPI.updateTask==="function"&&scheduleTimestamp){
+            try{await PluginAPI.updateTask(resId,{plannedAt:scheduleTimestamp,dueWithTime:scheduleTimestamp})}catch(e){}
+          }
+        }
+        tasksN++;
+      }else{tasksN++}
+    }
+
+    lastAppliedTaskIds=newCreatedIds;
+    localStorage.setItem("sp_last_applied_task_ids",JSON.stringify(lastAppliedTaskIds));
+    updateUndoButtonVisibility();
+
+    showNotification(`Scheduled ${tasksN} task(s) with exact start time for ${planningDateMode.toUpperCase()}!`,"SUCCESS");
+    await scanSuperProductivityData();
+  }catch(e){alert("Failed: "+e.message)}
+  finally{if(btn)btn.innerHTML=orig;updateApplyButtonsState()}
+}
+
+// ROBUST TASK DELETION & CLEANUP ENGINE
+async function removeOrUnscheduleTask(tId){
+  if(window.PluginAPI){
+    if(typeof PluginAPI.deleteTask==="function"){
+      try{await PluginAPI.deleteTask(tId);return true}catch(e){}
+    }
+    if(typeof PluginAPI.removeTask==="function"){
+      try{await PluginAPI.removeTask(tId);return true}catch(e){}
+    }
+    if(typeof PluginAPI.updateTask==="function"){
+      try{await PluginAPI.updateTask(tId,{isDone:true,dueDay:null,dueWithTime:null,plannedAt:null,tagIds:[]});return true}catch(e){}
+    }
+  }
+  return false;
+}
+
+// UNDO LAST APPLIED TASKS
+async function undoLastAppliedTasks(){
+  if(!lastAppliedTaskIds||lastAppliedTaskIds.length===0)return showNotification("No recently added tasks to undo.","INFO");
+  if(!confirm(`Undo & remove the last ${lastAppliedTaskIds.length} added tasks?`))return;
+
+  let removed=0;
+  try{
+    for(const tId of lastAppliedTaskIds){
+      if(typeof tId==="string"){
+        const ok=await removeOrUnscheduleTask(tId);
+        if(ok)removed++;
+      }
+    }
+    lastAppliedTaskIds=[];
+    localStorage.removeItem("sp_last_applied_task_ids");
+    updateUndoButtonVisibility();
+    showNotification(`Successfully reverted ${removed} task(s)!`,"SUCCESS");
+    await scanSuperProductivityData();
+  }catch(e){alert("Undo failed: "+e.message)}
+}
+
+// CLEAN TODAY & INBOX TASKS
+async function cleanCurrentDateTasks(){
+  const targetDayStr=getTargetDateISOString();
+  const choice=confirm(`Clean tasks for ${planningDateMode.toUpperCase()} (${targetDayStr})?\n\nClick OK to clean uncompleted tasks scheduled for ${planningDateMode.toUpperCase()} & all unassigned Inbox backlog tasks.`);
+  if(!choice)return;
+
+  let cleaned=0;
+  try{
+    if(window.PluginAPI?.getTasks){
+      const tasks=await PluginAPI.getTasks();
+      for(const t of(tasks||[])){
+        const isTargetDate=(t.dueDay===targetDayStr||(planningDateMode==="today"&&t.tagIds?.includes("TODAY")));
+        const isInboxTask=(!t.projectId||t.projectId===""||t.projectId===null);
+        if(!t.isDone&&(isTargetDate||isInboxTask)){
+          const ok=await removeOrUnscheduleTask(t.id);
+          if(ok)cleaned++;
+        }
+      }
+    }
+    showNotification(`Cleaned ${cleaned} uncompleted task(s) from Today & Inbox!`,"SUCCESS");
+    await scanSuperProductivityData();
+  }catch(e){alert("Cleanup failed: "+e.message)}
+}
+
+// BACKGROUND FINISHDAY HOOK INTEGRATION
+window.addEventListener("DOMContentLoaded",()=>{
+  loadConfig();
+  setPlanningDate("today");
+  if(window.PluginAPI&&typeof PluginAPI.onHook==="function"){
+    PluginAPI.onHook("finishDay",async()=>{
+      console.log("finishDay triggered: Auto-drafting tomorrow plan...");
+      try{
+        setPlanningDate("tomorrow");
+        await performMultiProjectDryRun();
+        setPlanningDate("today");
+      }catch(e){}
+    });
+  }
+});
+</script>
+</body>
+</html>
