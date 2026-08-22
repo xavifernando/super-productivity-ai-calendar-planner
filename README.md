@@ -8,15 +8,16 @@ A universal AI-powered daily task, habits, and calendar scheduler with continuou
 
 ## 🚀 Key Features
 
-- **Continuous Full-Day Timeblocking:** Mathematically analyzes calendar commitments (Google Calendar, Outlook, iCal) and populates 100% of open hours with high-impact project tasks and deep work sessions with zero dead gaps.
+- **Continuous Full-Day Timeblocking:** Mathematically analyzes calendar commitments (Google Calendar, Outlook, local iCal) and populates 100% of open hours with high-impact project tasks and deep work sessions with zero dead gaps.
 - **Collapsible Projects Explorer:** Organize project backlogs with collapsible accordions, per-project *Toggle All* switches, and one-click **`➕ Add to Today`** buttons.
-- **Habits & Rituals System:** Customizable habit categories with category *Toggle All* switches and direct 1-click sync to Super Productivity's native habit tracker (`#/habits`).
+- **Habits & Rituals System:** Customizable habit categories with category *Toggle All* switches and idempotent 1-click sync to Super Productivity's native habit tracker (`#/habits`).
 - **Plan for Today & Tomorrow:** Toggle seamlessly between planning Today and staging tomorrow's continuous schedule in advance before evening shutdown.
-- **Background `finishDay` Auto-Drafting:** Automatically generates a draft schedule for tomorrow whenever you conclude your workday.
+- **Background `finishDay` Auto-Drafting:** Uses `registerHook("finishDay")` to automatically generate a draft schedule for tomorrow whenever you conclude your workday.
 - **Multi-LLM AI Engine with Fallback:** Built-in zero-dependency support for **Google Gemini**, **OpenAI (GPT-4o)**, **Anthropic Claude**, **Ollama (Local LLMs)**, **OpenRouter**, **Groq**, and **Custom Endpoints**.
 - **Undo & Deep Cleanup:** Features **`↩️ Undo Apply`** to revert accidental schedule applications and **`🧹 Clear Today & Inbox`** to purge uncompleted tasks.
 - **6 Modern Themes:** Choose between *Catppuccin Mocha*, *Monochrome Minimal (B&W)*, *Midnight OLED*, *Nord Arctic*, *Cyberpunk Neon*, and *Minimal Studio*.
-- **SuperSync & Mobile Ready:** Uses standard Super Productivity task models with `plannedAt`, `dueWithTime`, and `timeEstimate`, ensuring full synchronization across desktop and mobile.
+- **Direct Task Sync:** Tasks scheduled by the planner populate standard Super Productivity models with `plannedAt`, `dueWithTime`, and `timeEstimate`, syncing natively with your core app.
+- **100% Privacy-First:** No third-party CORS proxies; secret calendar URLs and API keys stay on your local device.
 
 ---
 

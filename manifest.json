@@ -1,11 +1,11 @@
 {
   "id": "ai-calendar-planner",
   "name": "AI Calendar & Habits Planner",
-  "version": "4.5.4",
+  "version": "4.6.0",
   "manifestVersion": 1,
   "minSupVersion": "18.0.0",
   "author": "xavier sethu",
-  "description": "Universal AI daily task & calendar scheduler with continuous hour-by-hour timeblocking, Tomorrow planning, Habits & Rituals System, SuperSync mobile compatibility, and Super Productivity Habits integration.",
+  "description": "Universal AI daily task & calendar scheduler with continuous hour-by-hour timeblocking, Tomorrow planning, Habits & Rituals System, and direct Super Productivity task integration.",
   "iFrame": true,
   "icon": "icon.svg",
   "permissions": [
@@ -19,19 +19,16 @@
     "getAppState",
     "getAllProjects",
     "getAllTags",
-    "getAllSimpleCounters",
-    "getSimpleCounter",
-    "updateSimpleCounter",
+    "getAllCounters",
+    "getCounter",
     "setCounter",
     "incrementCounter",
+    "decrementCounter",
+    "deleteCounter",
     "showSnack",
     "openDialog"
   ],
   "hooks": [
-    "taskCreated",
-    "taskComplete",
-    "taskUpdate",
-    "currentTaskChange",
     "finishDay"
   ],
   "allowedHosts": [

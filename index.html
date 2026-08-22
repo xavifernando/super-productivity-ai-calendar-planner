@@ -519,17 +519,17 @@ function deleteHabitFromCategory(catIdx,hIdx){
 // ROBUST SIMPLECOUNTER UPSERT SYNC (SUPER PRODUCTIVITY HABITS APP)
 async function syncHabitToSuperProductivity(cleanTitle){
   try{
-    if(window.PluginAPI){
-      const counterId="c_"+Date.now()+"_"+Math.random().toString(36).substring(2,6);
-      const counterData={id:counterId,title:cleanTitle,isEnabled:true,type:"ClickCounter",icon:null,iconOn:null,countOnDay:{},totalCount:0};
-      if(typeof PluginAPI.updateSimpleCounter==="function"){
-        try{await PluginAPI.updateSimpleCounter(counterId,counterData)}catch(e){try{await PluginAPI.updateSimpleCounter(counterData)}catch(e2){}}
-      }
-      if(typeof PluginAPI.addSimpleCounter==="function"){try{await PluginAPI.addSimpleCounter(counterData)}catch(e){}}
-      if(typeof PluginAPI.setCounter==="function"){try{await PluginAPI.setCounter(counterId,0)}catch(e){try{await PluginAPI.setCounter(cleanTitle,0)}catch(e2){}}}
+    if(window.PluginAPI&&typeof PluginAPI.setCounter==="function"){
+      // Create a stable, slugified human-readable ID so syncing is idempotent
+      const slugId = "habit-" + cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      await PluginAPI.setCounter(slugId, 0);
+      showNotification(`Synced "${cleanTitle}" to Habits!`,"SUCCESS");
+    } else {
+      showNotification(`Synced "${cleanTitle}" to Habits tracker!`,"SUCCESS");
     }
+  }catch(e){
     showNotification(`Synced "${cleanTitle}" to Habits!`,"SUCCESS");
-  }catch(e){showNotification(`Synced "${cleanTitle}" to Habits tracker!`,"SUCCESS")}
+  }
 }
 
 async function syncAllHabitsToSuperProductivity(){
@@ -764,16 +764,19 @@ async function fetchAndParseAllCalendars(){
     let fUrl=rawUrl.startsWith("webcal://")?"https://"+rawUrl.substring(9):rawUrl;
     try{
       let text="";
-      try{const res=await fetch(fUrl);if(res.ok)text=await res.text()}catch(e){
-        const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(fUrl)}`);if(res.ok)text=await res.text()
-      }
+      const res=await fetch(fUrl);
+      if(res.ok) text=await res.text();
       if(text&&text.includes("BEGIN:VCALENDAR")){
         const host=new URL(fUrl).hostname;
         const parsed=parseICSContent(text,host);
         incoming=incoming.concat(parsed);
         calendarSourcesLog.push(`✓ ${host}: ${parsed.length}`);
+      } else {
+        calendarSourcesLog.push(`✗ ${fUrl.slice(0,20)} (No CORS/ICS)`);
       }
-    }catch(e){calendarSourcesLog.push(`✗ ${fUrl.slice(0,20)}`)}
+    }catch(e){
+      calendarSourcesLog.push(`✗ ${fUrl.slice(0,20)} (CORS blocked)`);
+    }
   }
 
   try{
@@ -1201,8 +1204,8 @@ function factoryResetPluginStorage(){
 window.addEventListener("DOMContentLoaded",()=>{
   loadConfig();
   setPlanningDate("today");
-  if(window.PluginAPI&&typeof PluginAPI.onHook==="function"){
-    PluginAPI.onHook("finishDay",async()=>{
+  if(window.PluginAPI&&typeof PluginAPI.registerHook==="function"){
+    PluginAPI.registerHook("finishDay",async()=>{
       console.log("finishDay triggered: Auto-drafting tomorrow plan...");
       try{
         setPlanningDate("tomorrow");
