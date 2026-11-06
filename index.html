@@ -126,7 +126,7 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
         <option value="groq">Groq</option>
         <option value="custom">Custom</option>
       </select>
-      <button class="btn btn-dryrun" id="btnDryRun" onclick="performMultiProjectDryRun()">🔍 Dry Run (Full Day Plan)</button>
+      <button class="btn btn-dryrun" id="btnDryRun" onclick="performMultiProjectDryRun()">🔍 Dry Run (Schedule Draft)</button>
       <button class="btn btn-apply" id="btnApplyTasksToToday" onclick="applySelectedTasksOnly()" disabled>🚀 Apply Tasks (<span id="selectedTasksCountBadge">0</span>)</button>
     </div>
   </header>
@@ -146,7 +146,7 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
       <div class="stat-box"><div class="stat-label">Projects</div><div class="stat-value" id="statProjectsCount">0</div></div>
       <div class="stat-box"><div class="stat-label">Backlog</div><div class="stat-value" id="statTotalTasksCount">0</div></div>
       <div class="stat-box"><div class="stat-label">Free Focus</div><div class="stat-value" id="statFreeHours" style="color:var(--success);">0h</div></div>
-      <div class="stat-box"><div class="stat-label">Coverage</div><div class="stat-value" id="statCoveragePercent" style="color:var(--primary);">100%</div></div>
+      <div class="stat-box"><div class="stat-label">Plan</div><div class="stat-value" id="statCoveragePercent" style="color:var(--primary);">Draft</div></div>
       <div class="stat-box"><div class="stat-label">Staged</div><div class="stat-value" id="statStagedCount" style="color:var(--purple);">0</div></div>
     </div>
     <div class="ai-summary-box" id="aiSummarySection" style="display:none;">
@@ -158,10 +158,10 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" id="btnSelectAllTasks">Toggle All</button>
           <button class="btn btn-secondary btn-sm" id="btnUndoLastApply" onclick="undoLastAppliedTasks()" style="display:none;">↩️ Undo Apply</button>
-          <button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()" title="Clean Today & Inbox tasks">🧹 Clear Today & Inbox</button>
+          <button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()" title="Unschedule incomplete tasks for the active date">🗓️ Unschedule Date</button>
         </div>
       </div>
-      <div id="emptyTasksState" class="empty-state">No continuous plan staged. Click <strong>"🔍 Dry Run (Full Day Plan)"</strong> in the header.</div>
+      <div id="emptyTasksState" class="empty-state">No schedule draft staged. Click <strong>"🔍 Dry Run (Schedule Draft)"</strong> in the header.</div>
       <div id="stagedItemsContainer" style="display:none;"></div>
     </div>
   </div>
@@ -238,7 +238,7 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
           <div class="form-group"><label>Workday End</label><input type="time" id="workdayEnd" value="18:00" onchange="onGeneralSettingLiveChange()"/></div>
           <div class="form-group"><label>Max Task Blocks</label><input type="number" id="maxTasksCount" value="25" min="5" max="50" onchange="onGeneralSettingLiveChange()"/></div>
         </div>
-        <div class="form-group"><label>Custom Directives</label><textarea id="customPromptInstructions" rows="2" placeholder="e.g. '100% full-day coverage with zero gaps. Split large tasks into 45-60m blocks.'" onchange="onGeneralSettingLiveChange()"></textarea></div>
+        <div class="form-group"><label>Custom Directives</label><textarea id="customPromptInstructions" rows="2" placeholder="e.g. Prioritize urgent tasks and leave unfilled time open." onchange="onGeneralSettingLiveChange()"></textarea></div>
         <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveGeneralSettings">💾 Save General</button></div>
       </div>
       <div id="sec-ai" class="settings-section">
@@ -249,13 +249,16 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
         </div>
         <div class="form-group"><label>API Key</label><input type="password" id="aiApiKeyInput" placeholder="Enter API Key"/></div>
         <div class="form-group"><label>API Endpoint (Optional)</label><input type="text" id="aiEndpointInput" placeholder="https://..."/></div>
+        <div class="tutorial-step" style="border-left-color:var(--warn);">API keys and plugin settings are stored in this app's localStorage and are not isolated from other installed iframe plugins. Install only plugins you trust.</div>
+        <div class="tutorial-step">Built-in cloud providers use the app's host allowlist. Custom endpoints, Ollama, and calendar URLs use direct browser requests and are not constrained by the manifest host list.</div>
+        <div class="form-group"><label><input type="checkbox" id="autoDraftOnFinishDay" style="width:auto;margin-right:6px;"/> Automatically draft tomorrow when I finish the day</label><div style="font-size:.76rem;color:var(--text-muted);">When enabled, the finishDay hook reads configured calendars and task/project titles and estimates, then sends planning context to the selected AI provider.</div></div>
         <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveAISettings">💾 Save AI</button></div>
       </div>
       <div id="sec-calendar" class="settings-section">
         <div class="card-header"><div class="card-title">🔗 Calendar Feeds</div><div style="display:flex;gap:5px;"><button class="btn btn-outline btn-sm" onclick="fetchAndParseAllCalendars()">🔄 Sync</button><label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer;">📂 .ics<input type="file" id="icsFileInput" accept=".ics,text/calendar" style="display:none;"/></label></div></div>
         <div id="calendarSourcesStatus" style="margin-bottom:8px;"></div>
-        <div class="form-group"><label>iCal URLs (One per line)</label><textarea id="icalUrlsInput" rows="2" placeholder="https://calendar.google.com/.../basic.ics"></textarea></div>
-        <div class="form-group"><label>Manual Events (Optional)</label><textarea id="manualEventsInput" rows="2" placeholder="09:30 - 10:00 Daily Team Standup"></textarea></div>
+        <div class="form-group"><label>iCal URLs (One per line)</label><textarea id="icalUrlsInput" rows="2" placeholder="https://calendar.google.com/.../basic.ics"></textarea><div style="font-size:.76rem;color:var(--text-muted);">Feeds are fetched directly by the browser. The feed host receives the request and its URL, which may contain a private token.</div></div>
+        <div class="form-group"><label>Manual Events (Optional)</label><textarea id="manualEventsInput" rows="2" placeholder="09:30 - 10:00 Meeting"></textarea></div>
         <div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" id="btnSaveCalendarFeeds">💾 Save & Sync</button></div>
       </div>
       <div id="sec-tools" class="settings-section">
@@ -268,20 +271,20 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
             </div>
           </div>
         </div>
-        <div class="tutorial-step"><div><strong>🧹 Clear Today & Inbox:</strong> Cleans up uncompleted tasks scheduled for the active date and cleans empty backlog tasks. <div style="margin-top:6px;"><button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()">Clear Today & Inbox Tasks</button></div></div></div>
-        <div class="tutorial-step"><div><strong>↩️ Undo Last Apply:</strong> Reverts the most recently applied batch of tasks. <div style="margin-top:6px;"><button class="btn btn-secondary btn-sm" onclick="undoLastAppliedTasks()">Undo Last Apply</button></div></div></div>
+        <div class="tutorial-step"><div><strong>🗓️ Unschedule active date:</strong> Clears scheduling fields for incomplete tasks on Today or Tomorrow. Tasks, projects, and subtasks are preserved. <div style="margin-top:6px;"><button class="btn btn-danger btn-sm" onclick="cleanCurrentDateTasks()">Unschedule Today/Tomorrow</button></div></div></div>
+        <div class="tutorial-step"><div><strong>↩️ Undo Last Apply:</strong> Restores previous scheduling fields or unschedules newly created tasks; task content is preserved. <div style="margin-top:6px;"><button class="btn btn-secondary btn-sm" onclick="undoLastAppliedTasks()">Undo Last Apply</button></div></div></div>
       </div>
       <div id="sec-guide" class="settings-section">
         <div class="card-title" style="margin-bottom:8px;">📖 Plugin Overview & How to Use</div>
         <div style="font-size:0.84rem;color:var(--text);margin-bottom:12px;line-height:1.6;">
-          <strong>AI Calendar & Task Planner</strong> is an automated daily executive assistant for Super Productivity. It reads your calendar commitments (Google Calendar, Outlook, iCal), computes exact free time gaps between meetings, and populates 100% of your open hours with project tasks and deep-work blocks.
+          <strong>AI Calendar & Task Planner</strong> drafts a schedule from your calendar commitments and existing backlog. It can leave time open when there are fewer tasks than available slots and does not invent tasks to fill the day.
         </div>
         <div class="tutorial-step"><div class="step-number">1</div><div><strong>Connect Calendars:</strong> Add iCal subscription feeds in <em>Calendar Feeds</em> or upload an <code>.ics</code> file. Meetings are deduplicated and synchronized across timezones.</div></div>
         <div class="tutorial-step"><div class="step-number">2</div><div><strong>Habits & Rituals:</strong> Categorize your habits in <em>Habits & Rituals</em>. Use the category <strong>Toggle All</strong> switch or click <strong>💾 Sync to Habits Section</strong> to register them into Super Productivity's native habit tracker (<code>#/habits</code>).</div></div>
         <div class="tutorial-step"><div class="step-number">3</div><div><strong>Projects Backlog:</strong> Use <em>Projects Explorer</em> to organize your tasks. Click <strong>➕ Add to Today</strong> on any task to manually schedule it into today's timeline.</div></div>
-        <div class="tutorial-step"><div class="step-number">4</div><div><strong>Full Day Dry Run:</strong> Click <strong>🔍 Dry Run (Full Day Plan)</strong> to let AI calculate continuous focus blocks for every open minute with zero dead time.</div></div>
+        <div class="tutorial-step"><div class="step-number">4</div><div><strong>Dry Run:</strong> Review a draft using your existing tasks. Unfilled time remains open; applying an existing task updates its schedule instead of creating a duplicate.</div></div>
         <div class="tutorial-step"><div class="step-number">5</div><div><strong>Plan Ahead:</strong> Toggle between <strong>📅 Today</strong> and <strong>⏩ Tomorrow</strong> at any time to stage and schedule tomorrow in advance.</div></div>
-        <div class="guide-pro-tip">💡 <strong>Pro Tip:</strong> When you finish your workday in Super Productivity, the <code>finishDay</code> hook automatically drafts tomorrow's schedule so it's ready when you wake up!</div>
+        <div class="guide-pro-tip">💡 <strong>Optional automation:</strong> Enable the finishDay checkbox in AI Providers to draft tomorrow automatically. This reads configured calendar feeds and task/project details and sends planning context to your selected provider.</div>
       </div>
     </div>
   </div>
@@ -293,7 +296,7 @@ body[data-theme="monochrome"] .subnav-btn.active{background:#ffffff;color:#00000
 
 <script>
 const PROVIDER_DEFAULTS={gemini:{model:"gemini-2.5-flash",endpoint:"https://generativelanguage.googleapis.com/v1beta/models"},openai:{model:"gpt-4o",endpoint:"https://api.openai.com/v1/chat/completions"},claude:{model:"claude-3-7-sonnet-20250219",endpoint:"https://api.anthropic.com/v1/messages"},ollama:{model:"llama3.2",endpoint:"http://localhost:11434/v1/chat/completions"},openrouter:{model:"deepseek/deepseek-r1",endpoint:"https://openrouter.ai/api/v1/chat/completions"},groq:{model:"llama-3.3-70b-versatile",endpoint:"https://api.groq.com/openai/v1/chat/completions"},custom:{model:"custom-model",endpoint:"http://localhost:8000/v1/chat/completions"}};
-const DEFAULT_CONFIG={theme:"catppuccin",provider:"gemini",model:"gemini-2.5-flash",apiKey:"",endpoint:"",workdayStart:"09:00",workdayEnd:"18:00",maxTasks:25,preferredChunk:"60",customPrompt:"Ensure 100% full-day coverage across every hour and minute with zero gaps. Decompose large tasks into 45-60m blocks.",icalUrls:"",manualEvents:""};
+const DEFAULT_CONFIG={theme:"catppuccin",provider:"gemini",model:"gemini-2.5-flash",apiKey:"",endpoint:"",workdayStart:"09:00",workdayEnd:"18:00",maxTasks:25,preferredChunk:"60",customPrompt:"Prioritize urgent existing tasks and leave any unfilled time open. Do not invent tasks or duplicate backlog items.",icalUrls:"",manualEvents:"",autoDraftOnFinishDay:false};
 
 // Compressed Habits & Rituals Definition
 const RAW_HABITS_DATA=[
@@ -318,20 +321,92 @@ let planningDateMode="today";
 let todayEvents=[];
 let allTasks=[];
 let projectsList=[];
+let appTaskIds=new Set();
+let appProjectIds=new Set();
 let projectTaskMap={};
 let projectTaskSelectionMap={};
 let customProjects=[];
 let customTasks=[];
 let stagedItems=[];
 let calendarSourcesLog=[];
-let lastAppliedTaskIds=[];
+let lastAppliedTasks=[];
 
 function safeSetText(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
 function safeSetVal(id,val){const el=document.getElementById(id);if(el)el.value=val}
 function safeListen(id,ev,fn){const el=document.getElementById(id);if(el)el.addEventListener(ev,fn)}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
 
 function getTargetDateObject(){const d=new Date();if(planningDateMode==="tomorrow")d.setDate(d.getDate()+1);return d}
-function getTargetDateISOString(){return getTargetDateObject().toISOString().slice(0,10)}
+function toLocalDateKey(value){
+  const date=new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+function getTargetDateISOString(){return toLocalDateKey(getTargetDateObject())}
+function isTaskScheduledForDate(task,targetDateKey){
+  if(task.dueWithTime)return toLocalDateKey(task.dueWithTime)===targetDateKey;
+  if(task.dueDay===targetDateKey)return true;
+  return Boolean(targetDateKey===toLocalDateKey(new Date())&&task.tagIds?.includes("TODAY"));
+}
+function getUnscheduledBacklogTasks(){
+  return allTasks.filter(task=>!task.isDone&&!task.dueDay&&!task.dueWithTime&&!task.tagIds?.includes("TODAY"));
+}
+function normalizeTaskTitle(title){return String(title||"").trim().replace(/\s+/g," ").toLowerCase()}
+function normalizePlanItems(items,backlogTasks,appBacklogIds){
+  if(!Array.isArray(items))return [];
+  const taskById=new Map(backlogTasks.filter(task=>task.id).map(task=>[task.id,task]));
+  const tasksByTitle=new Map();
+  backlogTasks.forEach(task=>{
+    const key=normalizeTaskTitle(task.title);
+    if(!key)return;
+    const matches=tasksByTitle.get(key)||[];
+    matches.push(task);
+    tasksByTitle.set(key,matches);
+  });
+  const usedIds=new Set();
+  const normalized=[];
+  items.forEach(item=>{
+    if(!item||typeof item.title!=="string"||!item.title.trim())return;
+    const hasId=typeof item.originalTaskId==="string"&&item.originalTaskId.length>0;
+    let task=hasId?taskById.get(item.originalTaskId):undefined;
+    if(hasId&&!task)return;
+    if(!hasId){
+      const matches=tasksByTitle.get(normalizeTaskTitle(item.title))||[];
+      if(matches.length>1)return;
+      task=matches[0];
+    }
+    if(task){
+      if(usedIds.has(task.id))return;
+      usedIds.add(task.id);
+      if(appBacklogIds.has(task.id)){
+        item.originalTaskId=task.id;
+        item.actionType="SCHEDULE_EXISTING";
+        delete item.localTaskId;
+      }else{
+        delete item.originalTaskId;
+        delete item.actionType;
+        item.localTaskId=task.id;
+      }
+    }else{
+      delete item.originalTaskId;
+      delete item.actionType;
+      delete item.localTaskId;
+    }
+    normalized.push(item);
+  });
+  return normalized;
+}
+function buildPlannerInput(backlogTasks,projects){
+  const sections=projects.map(project=>{
+    const tasks=backlogTasks.filter(task=>task.projectId===project.id);
+    return `PROJECT "${project.title}":\n${tasks.map(task=>`  - [${task.id}] "${task.title}" (${Math.round((task.timeEstimate||1800000)/60000)}m)`).join("\n")}`;
+  });
+  const projectIds=new Set(projects.map(project=>project.id));
+  const unassigned=backlogTasks.filter(task=>!task.projectId||!projectIds.has(task.projectId));
+  if(unassigned.length){
+    sections.push(`UNASSIGNED BACKLOG:\n${unassigned.map(task=>`  - [${task.id}] "${task.title}" (${Math.round((task.timeEstimate||1800000)/60000)}m)`).join("\n")}`);
+  }
+  return sections.join("\n\n");
+}
 
 function showNotification(msg,type="SUCCESS"){
   if(window.PluginAPI&&typeof window.PluginAPI.showSnack==="function")window.PluginAPI.showSnack({msg,type});
@@ -384,7 +459,10 @@ function loadConfig(){
     const cp=localStorage.getItem("sp_ai_custom_proj_v4");
     if(cp){const parsedCp=JSON.parse(cp);customProjects=parsedCp.projects||[];customTasks=parsedCp.tasks||[]}
     const lastIds=localStorage.getItem("sp_last_applied_task_ids");
-    if(lastIds)lastAppliedTaskIds=JSON.parse(lastIds);
+    if(lastIds){
+      const saved=JSON.parse(lastIds);
+      lastAppliedTasks=Array.isArray(saved)?saved.map(item=>typeof item==="string"?{id:item,previous:null}:item):[];
+    }
   }catch(e){}
 
   applyTheme(config.theme||"catppuccin");
@@ -401,13 +479,20 @@ function loadConfig(){
   safeSetVal("customPromptInstructions",config.customPrompt);
   safeSetVal("icalUrlsInput",config.icalUrls);
   safeSetVal("manualEventsInput",config.manualEvents);
+  const autoDraftToggle=document.getElementById("autoDraftOnFinishDay");
+  if(autoDraftToggle)autoDraftToggle.checked=config.autoDraftOnFinishDay===true;
   renderHabitsAccordion();
   updateUndoButtonVisibility();
 }
 
 function updateUndoButtonVisibility(){
   const btn=document.getElementById("btnUndoLastApply");
-  if(btn)btn.style.display=(lastAppliedTaskIds&&lastAppliedTaskIds.length>0)?"inline-flex":"none";
+  if(btn)btn.style.display=(lastAppliedTasks&&lastAppliedTasks.length>0)?"inline-flex":"none";
+}
+function persistUndoBatch(tasks){
+  lastAppliedTasks=tasks.slice();
+  localStorage.setItem("sp_last_applied_task_ids",JSON.stringify(lastAppliedTasks));
+  updateUndoButtonVisibility();
 }
 
 function switchTab(tabId){
@@ -440,6 +525,7 @@ function onGeneralSettingLiveChange(){
   config.maxTasks=parseInt(document.getElementById("maxTasksCount")?.value,10)||25;
   config.preferredChunk=document.getElementById("preferredChunkDuration")?.value||"60";
   config.customPrompt=document.getElementById("customPromptInstructions")?.value||"";
+  config.autoDraftOnFinishDay=document.getElementById("autoDraftOnFinishDay")?.checked===true;
   saveConfig();calculateStatsAndTimeline();
 }
 
@@ -454,6 +540,7 @@ function saveAllSettings(){
   config.maxTasks=parseInt(document.getElementById("maxTasksCount")?.value,10)||25;
   config.preferredChunk=document.getElementById("preferredChunkDuration")?.value||"60";
   config.customPrompt=document.getElementById("customPromptInstructions")?.value||"";
+  config.autoDraftOnFinishDay=document.getElementById("autoDraftOnFinishDay")?.checked===true;
   config.icalUrls=document.getElementById("icalUrlsInput")?.value.trim()||"";
   config.manualEvents=document.getElementById("manualEventsInput")?.value.trim()||"";
   saveConfig();calculateStatsAndTimeline();
@@ -462,6 +549,7 @@ function saveAllSettings(){
 safeListen("btnSaveGeneralSettings","click",()=>{saveAllSettings();showNotification("General settings saved!","SUCCESS")});
 safeListen("btnSaveAISettings","click",()=>{saveAllSettings();showNotification("AI settings saved!","SUCCESS")});
 safeListen("btnSaveCalendarFeeds","click",async()=>{saveAllSettings();await fetchAndParseAllCalendars();showNotification("Calendar saved & synced!","SUCCESS")});
+safeListen("autoDraftOnFinishDay","change",event=>{config.autoDraftOnFinishDay=event.target.checked===true;saveConfig()});
 safeListen("btnResetHabitsLibrary","click",()=>{
   if(confirm("Reset habits to the default library?")){
     userHabitCategories=buildDefaultHabitCategories();
@@ -482,7 +570,7 @@ function submitAddCategory(){
 
 function openAddHabitModal(catIdx=0){
   const s=document.getElementById("habitCategorySelect");
-  if(s)s.innerHTML=userHabitCategories.map((c,i)=>`<option value="${i}" ${i===catIdx?"selected":""}>${c.name}</option>`).join("");
+  if(s)s.innerHTML=userHabitCategories.map((c,i)=>`<option value="${i}" ${i===catIdx?"selected":""}>${escapeHtml(c.name)}</option>`).join("");
   safeSetVal("newHabitTitleInput","");safeSetVal("newHabitFreqInput","Daily");safeSetVal("newHabitDurInput",15);
   openModal("modalAddHabit");
 }
@@ -516,63 +604,86 @@ function deleteHabitFromCategory(catIdx,hIdx){
   if(userHabitCategories[catIdx]?.habits){userHabitCategories[catIdx].habits.splice(hIdx,1);saveHabitsLibrary();renderHabitsAccordion()}
 }
 
-// ROBUST SIMPLECOUNTER UPSERT SYNC (SUPER PRODUCTIVITY HABITS APP)
+function getHabitCounterId(title){
+  const cleanTitle=String(title||"").trim();
+  const slug=cleanTitle.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  const fallback=Array.from(cleanTitle).map(char=>char.codePointAt(0).toString(16)).join("-");
+  return `habit-${slug||`title-${fallback||"empty"}`}`;
+}
+
 async function syncHabitToSuperProductivity(cleanTitle){
   try{
-    if(window.PluginAPI&&typeof PluginAPI.setCounter==="function"){
-      // Create a stable, slugified human-readable ID so syncing is idempotent
-      const slugId = "habit-" + cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-      await PluginAPI.setCounter(slugId, 0);
-      showNotification(`Synced "${cleanTitle}" to Habits!`,"SUCCESS");
-    } else {
-      showNotification(`Synced "${cleanTitle}" to Habits tracker!`,"SUCCESS");
-    }
-  }catch(e){
+    if(!window.PluginAPI||typeof PluginAPI.getCounter!=="function"||typeof PluginAPI.setCounter!=="function")throw new Error("Habit counter API is unavailable.");
+    const counterId=getHabitCounterId(cleanTitle);
+    if(await PluginAPI.getCounter(counterId)===null)await PluginAPI.setCounter(counterId,0);
     showNotification(`Synced "${cleanTitle}" to Habits!`,"SUCCESS");
+    return true;
+  }catch(e){
+    showNotification(`Couldn't sync "${cleanTitle}" to Habits: ${e.message}`,"ERROR");
+    return false;
   }
 }
 
 async function syncAllHabitsToSuperProductivity(){
-  let count=0;
+  let count=0,failed=0;
   for(const cat of userHabitCategories){
     for(const h of(cat.habits||[])){
-      if(h.enabled!==false){await syncHabitToSuperProductivity(h.title);count++}
+      if(h.enabled!==false){if(await syncHabitToSuperProductivity(h.title))count++;else failed++}
     }
   }
-  showNotification(`Synced ${count} habit(s) to Habits screen!`,"SUCCESS");
+  showNotification(`Synced ${count} habit(s); ${failed} failed.` ,failed?"WARNING":"SUCCESS");
 }
 
 function renderHabitsAccordion(){
   const container=document.getElementById("habitCategoriesAccordion");if(!container)return;
+  if(!container.dataset.actionsBound){
+    container.addEventListener("click",event=>{
+      const target=event.target.closest("[data-action]");if(!target)return;
+      const catIdx=Number(target.dataset.categoryIndex),habitIdx=Number(target.dataset.habitIndex);
+      if(target.dataset.action==="toggle-accordion")toggleAccordion(target.dataset.accordionId);
+      else if(target.dataset.action==="open-add-habit")openAddHabitModal(catIdx);
+      else if(target.dataset.action==="delete-category")deleteCategory(catIdx);
+      else if(target.dataset.action==="sync-habit")syncHabitToSuperProductivity(userHabitCategories[catIdx]?.habits?.[habitIdx]?.title||"");
+      else if(target.dataset.action==="delete-habit")deleteHabitFromCategory(catIdx,habitIdx);
+    });
+    container.addEventListener("change",event=>{
+      const target=event.target.closest("[data-action]");if(!target)return;
+      const catIdx=Number(target.dataset.categoryIndex),habitIdx=Number(target.dataset.habitIndex);
+      if(target.dataset.action==="toggle-all-habits")toggleAllCategoryHabits(catIdx,target.checked);
+      else if(target.dataset.action==="toggle-habit")toggleHabitEnabled(catIdx,habitIdx,target.checked);
+    });
+    container.dataset.actionsBound="true";
+  }
   container.innerHTML="";
   userHabitCategories.forEach((cat,catIdx)=>{
     const box=document.createElement("div");box.className="accordion-box";
     const habitsList=cat.habits||[];
     const enabledCount=habitsList.filter(h=>h.enabled!==false).length;
     const allEnabled=habitsList.length>0&&enabledCount===habitsList.length;
+    const accordionId=`acc-habit-${catIdx}`;
     box.innerHTML=`
-      <div class="accordion-header" onclick="toggleAccordion('acc-habit-${cat.id}')">
+      <div class="accordion-header" data-action="toggle-accordion" data-accordion-id="${accordionId}">
         <div class="accordion-title">
-          <input type="checkbox" ${allEnabled?"checked":""} title="Toggle All in this category" onclick="event.stopPropagation();toggleAllCategoryHabits(${catIdx},this.checked)" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
-          <span>📁</span><span>${cat.name}</span>${cat.desc?`<span style="font-size:0.72rem;color:var(--text-muted);font-weight:normal;">(${cat.desc})</span>`:""}
+          <input type="checkbox" ${allEnabled?"checked":""} title="Toggle All in this category" data-action="toggle-all-habits" data-category-index="${catIdx}" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
+          <span>📁</span><span>${escapeHtml(cat.name)}</span>${cat.desc?`<span style="font-size:0.72rem;color:var(--text-muted);font-weight:normal;">(${escapeHtml(cat.desc)})</span>`:""}
         </div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="badge badge-tag">${enabledCount}/${habitsList.length}</span>
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddHabitModal(${catIdx})">+ Habit</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCategory(${catIdx})">✕</button>
-          <span id="acc-icon-acc-habit-${cat.id}" style="font-size:0.7rem;color:var(--text-muted);">▼</span>
+          <button class="btn btn-primary btn-sm" data-action="open-add-habit" data-category-index="${catIdx}">+ Habit</button>
+          <button class="btn btn-danger btn-sm" data-action="delete-category" data-category-index="${catIdx}">✕</button>
+          <span id="acc-icon-${accordionId}" style="font-size:0.7rem;color:var(--text-muted);">▼</span>
         </div>
       </div>
-      <div class="accordion-items-container" id="acc-body-acc-habit-${cat.id}" style="display:none;">
+      <div class="accordion-items-container" id="acc-body-${accordionId}" style="display:none;">
         ${habitsList.length>0?habitsList.map((h,hIdx)=>`
           <div class="item-row">
-            <input type="checkbox" ${h.enabled!==false?"checked":""} onchange="toggleHabitEnabled(${catIdx},${hIdx},this.checked)" />
-            <div class="item-row-title">${h.title}</div>
+            <input type="checkbox" ${h.enabled!==false?"checked":""} data-action="toggle-habit" data-category-index="${catIdx}" data-habit-index="${hIdx}" />
+            <div class="item-row-title">${escapeHtml(h.title)}</div>
             <div class="item-row-meta">
-              <span class="badge badge-proj">${h.freq||"Daily"}</span>
-              ${h.dur?`<span class="badge badge-tag">${h.dur}m</span>`:""}
-              <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" onclick="syncHabitToSuperProductivity('${h.title.replace(/'/g,"\\'")}')">➕ Add to Habits App</button>
-              <button class="btn btn-secondary btn-sm" style="padding:1px 5px;font-size:0.68rem;color:var(--danger);" onclick="deleteHabitFromCategory(${catIdx},${hIdx})">✕</button>
+              <span class="badge badge-proj">${escapeHtml(h.freq||"Daily")}</span>
+              ${h.dur?`<span class="badge badge-tag">${escapeHtml(h.dur)}m</span>`:""}
+              <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" data-action="sync-habit" data-category-index="${catIdx}" data-habit-index="${hIdx}">➕ Add to Habits App</button>
+              <button class="btn btn-secondary btn-sm" style="padding:1px 5px;font-size:0.68rem;color:var(--danger);" data-action="delete-habit" data-category-index="${catIdx}" data-habit-index="${hIdx}">✕</button>
             </div>
           </div>
         `).join(""):`<div style="font-size:0.75rem;color:var(--text-muted);padding:4px;">No habits yet.</div>`}
@@ -599,7 +710,7 @@ function submitAddProject(){
 }
 function openAddProjectTaskModal(pId=""){
   const s=document.getElementById("projectTaskCategorySelect");
-  if(s)s.innerHTML=projectsList.map(p=>`<option value="${p.id}" ${p.id===pId?"selected":""}>${p.title}</option>`).join("");
+  if(s)s.innerHTML=projectsList.map(p=>`<option value="${escapeHtml(p.id)}" ${p.id===pId?"selected":""}>${escapeHtml(p.title)}</option>`).join("");
   safeSetVal("newProjectTaskTitleInput","");safeSetVal("newProjectTaskDurInput",45);
   openModal("modalAddProjectTask");
 }
@@ -612,7 +723,7 @@ function submitAddProjectTask(){
   saveCustomProjects();closeModal("modalAddProjectTask");scanSuperProductivityData();
   showNotification(`Added task "${title}"!`,"SUCCESS");
 }
-function manuallyAddProjectTaskToToday(pId,tTitle,durMin=45){
+function manuallyAddProjectTaskToToday(pId,tTitle,durMin=45,originalTaskId=null){
   const pObj=projectsList.find(p=>p.id===pId);
   const pName=pObj?pObj.title:"Project Focus";
   const newTask={
@@ -621,6 +732,8 @@ function manuallyAddProjectTaskToToday(pId,tTitle,durMin=45){
     priority:"HIGH",category:"PROJECT_TASK",
     rationale:`Manually scheduled from ${pName}.`
   };
+  if(originalTaskId&&appTaskIds.has(originalTaskId)){newTask.actionType="SCHEDULE_EXISTING";newTask.originalTaskId=originalTaskId}
+  else if(originalTaskId&&customTasks.some(task=>task.id===originalTaskId))newTask.localTaskId=originalTaskId;
   stagedItems.push(newTask);
   saveCurrentPlanToStorage({recommendedTasks:stagedItems});
   renderStagedItems(stagedItems,`Added "${tTitle}" to schedule.`,true);
@@ -639,23 +752,43 @@ function toggleProjectTaskCheckbox(tId,val){
 
 function renderProjectsExplorer(){
   const container=document.getElementById("projectsAccordionContainer");if(!container)return;container.innerHTML="";
+  if(!container.dataset.actionsBound){
+    container.addEventListener("click",event=>{
+      const target=event.target.closest("[data-action]");if(!target)return;
+      const projectIndex=Number(target.dataset.projectIndex),taskIndex=Number(target.dataset.taskIndex);
+      const project=projectsList[projectIndex],tasks=projectTaskMap[project?.id]||[],task=tasks[taskIndex];
+      if(target.dataset.action==="toggle-accordion")toggleAccordion(target.dataset.accordionId);
+      else if(target.dataset.action==="open-add-project-task")openAddProjectTaskModal(project?.id||"");
+      else if(target.dataset.action==="add-project-task"&&project&&task){
+        manuallyAddProjectTaskToToday(project.id,task.title,Math.round((task.timeEstimate||1800000)/60000),task.id);
+      }
+    });
+    container.addEventListener("change",event=>{
+      const target=event.target.closest("[data-action]");if(!target)return;
+      const projectIndex=Number(target.dataset.projectIndex),taskIndex=Number(target.dataset.taskIndex);
+      const project=projectsList[projectIndex],tasks=projectTaskMap[project?.id]||[],task=tasks[taskIndex];
+      if(target.dataset.action==="toggle-project-tasks"&&project)toggleAllProjectTasks(project.id,target.checked);
+      else if(target.dataset.action==="toggle-project-task"&&task)toggleProjectTaskCheckbox(task.id,target.checked);
+    });
+    container.dataset.actionsBound="true";
+  }
   
   projectsList.forEach((proj,pIdx)=>{
     const tasks=projectTaskMap[proj.id]||[];
     const box=document.createElement("div");box.className="accordion-box";
     const selectedCount=tasks.filter(t=>projectTaskSelectionMap[t.id]!==false).length;
     const allSelected=tasks.length>0&&selectedCount===tasks.length;
-    const accId=`proj_${pIdx}_${proj.id.replace(/[^a-zA-Z0-9]/g,'_')}`;
+    const accId=`proj_${pIdx}`;
 
     box.innerHTML=`
-      <div class="accordion-header" onclick="toggleAccordion('${accId}')">
+      <div class="accordion-header" data-action="toggle-accordion" data-accordion-id="${accId}">
         <div class="accordion-title">
-          <input type="checkbox" ${allSelected?"checked":""} title="Toggle all tasks in this project" onclick="event.stopPropagation();toggleAllProjectTasks('${proj.id}',this.checked)" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
-          <span>📁</span><span>${proj.title}</span>
+          <input type="checkbox" ${allSelected?"checked":""} title="Toggle all tasks in this project" data-action="toggle-project-tasks" data-project-index="${pIdx}" style="width:14px;height:14px;cursor:pointer;margin-right:4px;" />
+          <span>📁</span><span>${escapeHtml(proj.title)}</span>
         </div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="badge badge-proj">${tasks.length} tasks</span>
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddProjectTaskModal('${proj.id}')">+ Task</button>
+          <button class="btn btn-primary btn-sm" data-action="open-add-project-task" data-project-index="${pIdx}">+ Task</button>
           <span id="acc-icon-${accId}" style="font-size:0.7rem;color:var(--text-muted);">▼</span>
         </div>
       </div>
@@ -665,11 +798,11 @@ function renderProjectsExplorer(){
           const isChecked=projectTaskSelectionMap[t.id]!==false;
           return `
             <div class="item-row">
-              <input type="checkbox" ${isChecked?"checked":""} onchange="toggleProjectTaskCheckbox('${t.id}',this.checked)" />
-              <div class="item-row-title">${t.title}</div>
+              <input type="checkbox" ${isChecked?"checked":""} data-action="toggle-project-task" data-project-index="${pIdx}" data-task-index="${tasks.indexOf(t)}" />
+              <div class="item-row-title">${escapeHtml(t.title)}</div>
               <div class="item-row-meta">
                 <span class="badge badge-tag">${durMin}m</span>
-                <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" onclick="manuallyAddProjectTaskToToday('${proj.id}','${t.title.replace(/'/g,"\\'")}',${durMin})">➕ Add to Today</button>
+                <button class="btn btn-outline btn-sm" style="padding:1px 5px;font-size:0.7rem;" data-action="add-project-task" data-project-index="${pIdx}" data-task-index="${tasks.indexOf(t)}">➕ Add to Today</button>
               </div>
             </div>`;
         }).join(""):`<div style="font-size:0.75rem;color:var(--text-muted);padding:4px;">No tasks in this project. Click "+ Task" above to add one.</div>`}
@@ -693,16 +826,14 @@ function parseIcsDateString(v){
 
 function parseICSContent(text,src="Feed"){
   const evs=[];const lines=text.split(/\r\n|\n|\r/);let cur=null;
-  const targetDate=getTargetDateObject();
   for(let i=0;i<lines.length;i++){
     let l=lines[i].trim();
     while(i+1<lines.length&&(lines[i+1].startsWith(" ")||lines[i+1].startsWith("\t"))){i++;l+=lines[i].substring(1)}
     if(l.startsWith("BEGIN:VEVENT")){cur={}}
     else if(l.startsWith("END:VEVENT")){
       if(cur&&cur.summary&&cur.dtstart){
-        const rawStart=new Date(cur.dtstart);
-        const s=new Date(targetDate);s.setHours(rawStart.getHours(),rawStart.getMinutes(),0,0);
-        let e;if(cur.dtend){const rawEnd=new Date(cur.dtend);e=new Date(s.getTime()+Math.max(15*60000,rawEnd.getTime()-rawStart.getTime()))}
+        const s=new Date(cur.dtstart);
+        let e;if(cur.dtend){const rawEnd=new Date(cur.dtend);e=new Date(s.getTime()+Math.max(15*60000,rawEnd.getTime()-cur.dtstart.getTime()))}
         else e=new Date(s.getTime()+30*60000);
         const cleanSum=cur.summary.replace(/^\s*\[[^\]]*\]\s*/i,"").trim();
         evs.push({summary:cleanSum,startTime:s,endTime:e,startFormatted:s.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),endFormatted:e.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),source:src});
@@ -749,7 +880,7 @@ function deduplicateAndSetEvents(rawList){
     const norm=normalizeEventSummary(ev.summary);
     const sM=ev.startTime.getHours()*60+ev.startTime.getMinutes();
     const eM=ev.endTime.getHours()*60+ev.endTime.getMinutes();
-    const key=`${sM}_${eM}_${norm}`;
+    const key=`${toLocalDateKey(ev.startTime)}_${sM}_${eM}_${norm}`;
     if(!seen.has(key)){seen.add(key);cleanList.push(ev)}
   });
   todayEvents=cleanList;calculateStatsAndTimeline();
@@ -784,8 +915,8 @@ async function fetchAndParseAllCalendars(){
       const tasks=await PluginAPI.getTasks();
       const targetDayStr=getTargetDateISOString();
       (tasks||[]).forEach(t=>{
-        if(!t.isDone&&(t.dueDay===targetDayStr||t.dueWithTime||t.plannedAt||(planningDateMode==="today"&&t.tagIds?.includes("TODAY")))){
-          const scheduleTs=t.plannedAt||t.dueWithTime;
+        if(!t.isDone&&isTaskScheduledForDate(t,targetDayStr)){
+          const scheduleTs=t.dueWithTime;
           if(scheduleTs){
             const s=new Date(scheduleTs);const end=new Date(s.getTime()+(t.timeEstimate||1800000));
             incoming.push({summary:t.title.replace(/^\s*\[[^\]]*\]\s*/i,"").trim(),startTime:s,endTime:end,startFormatted:s.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),endFormatted:end.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hour12:false}),source:"SP"});
@@ -796,34 +927,31 @@ async function fetchAndParseAllCalendars(){
   }catch(e){}
 
   if(config.manualEvents)incoming=incoming.concat(parseManualSchedule(config.manualEvents));
-  if(incoming.length===0){
-    const d=getTargetDateObject();
-    const m1s=new Date(d);m1s.setHours(9,30,0,0);const m1e=new Date(d);m1e.setHours(10,0,0,0);
-    const m2s=new Date(d);m2s.setHours(13,30,0,0);const m2e=new Date(d);m2e.setHours(14,30,0,0);
-    incoming=[{summary:"Team Standup",startTime:m1s,endTime:m1e,startFormatted:"09:30",endFormatted:"10:00",source:"Demo"},{summary:"Architecture Review",startTime:m2s,endTime:m2e,startFormatted:"13:30",endFormatted:"14:30",source:"Demo"}];
-  }
-
   const pBox=document.getElementById("calendarSyncStatusBox");const fBox=document.getElementById("calendarSourcesStatus");
   const uniqueLogs=Array.from(new Set(calendarSourcesLog));
-  const pills=uniqueLogs.map(l=>`<span class="calendar-source-pill">${l}</span>`).join("");
+  const pills=uniqueLogs.map(l=>`<span class="calendar-source-pill">${escapeHtml(l)}</span>`).join("");
   if(pBox)pBox.innerHTML=pills;if(fBox)fBox.innerHTML=pills;
   deduplicateAndSetEvents(incoming);
 }
 
 async function scanSuperProductivityData(){
-  allTasks=[];projectsList=[];projectTaskMap={};
+  allTasks=[];projectsList=[];projectTaskMap={};appTaskIds=new Set();appProjectIds=new Set();
   try{
     if(window.PluginAPI){
-      if(typeof PluginAPI.getAllProjects==="function"){const p=await PluginAPI.getAllProjects();if(Array.isArray(p)&&p.length>0)projectsList=p}
-      if(typeof PluginAPI.getTasks==="function"){const t=await PluginAPI.getTasks();if(Array.isArray(t)&&t.length>0)allTasks=t.filter(x=>!x.isDone)}
+      if(typeof PluginAPI.getAllProjects==="function"){
+        const p=await PluginAPI.getAllProjects();
+        if(Array.isArray(p)){projectsList=p;appProjectIds=new Set(p.map(project=>project.id).filter(Boolean))}
+      }
+      if(typeof PluginAPI.getTasks==="function"){
+        const t=await PluginAPI.getTasks();
+        if(Array.isArray(t)){allTasks=t.filter(x=>!x.isDone);appTaskIds=new Set(allTasks.map(task=>task.id).filter(Boolean))}
+      }
     }
   }catch(e){}
 
   customProjects.forEach(cp=>{if(!projectsList.some(p=>p.id===cp.id))projectsList.push(cp)});
   customTasks.forEach(ct=>{if(!allTasks.some(t=>t.id===ct.id))allTasks.push(ct)});
 
-  if(projectsList.length===0)projectsList=[{id:"p1",title:"Core Deliverables"},{id:"p2",title:"Platform & Infra"},{id:"p3",title:"Client Growth"}];
-  if(allTasks.length===0)allTasks=[{id:"t1",title:"Implement core pipeline features",projectId:"p1",timeEstimate:5400000},{id:"t2",title:"Review PRs and run integration tests",projectId:"p2",timeEstimate:3600000},{id:"t3",title:"Prepare roadmap deliverables",projectId:"p3",timeEstimate:2700000}];
   projectsList.forEach(p=>projectTaskMap[p.id]=allTasks.filter(t=>t.projectId===p.id));
   projectTaskMap["unassigned"]=allTasks.filter(t=>!t.projectId||!projectsList.some(p=>p.id===t.projectId));
   renderProjectsExplorer();await fetchAndParseAllCalendars();
@@ -835,7 +963,8 @@ function calculateFreeTimeSlots(){
   const [sh,sm]=startStr.split(":").map(Number);const [eh,em]=endStr.split(":").map(Number);
   const startOfDayMin=sh*60+sm,endOfDayMin=eh*60+em;
 
-  const events=todayEvents.filter(e=>e.startTime&&e.endTime).map(e=>{
+  const targetDateKey=getTargetDateISOString();
+  const events=todayEvents.filter(e=>e.startTime&&e.endTime&&toLocalDateKey(e.startTime)===targetDateKey).map(e=>{
     const sM=e.startTime.getHours()*60+e.startTime.getMinutes();
     const eM=e.endTime.getHours()*60+e.endTime.getMinutes();
     return{start:Math.max(startOfDayMin,sM),end:Math.min(endOfDayMin,eM),summary:e.summary};
@@ -863,14 +992,16 @@ function calculateFreeTimeSlots(){
 }
 
 function calculateStatsAndTimeline(){
-  todayEvents.sort((a,b)=>(a.startTime||0)-(b.startTime||0));
+  const targetDateKey=getTargetDateISOString();
+  const targetEvents=todayEvents.filter(ev=>ev.startTime&&toLocalDateKey(ev.startTime)===targetDateKey);
+  targetEvents.sort((a,b)=>(a.startTime||0)-(b.startTime||0));
   const startStr=document.getElementById("workdayStart")?.value||config.workdayStart||"09:00";
   const endStr=document.getElementById("workdayEnd")?.value||config.workdayEnd||"18:00";
   const [sh,sm]=startStr.split(":").map(Number);const [eh,em]=endStr.split(":").map(Number);
   const totalM=Math.max(0,(eh*60+em)-(sh*60+sm));
   const sMin=sh*60+sm,eMin=eh*60+em;
   let meetM=0;
-  todayEvents.forEach(ev=>{
+  targetEvents.forEach(ev=>{
     if(ev.startTime&&ev.endTime){
       const sM=Math.max(sMin,ev.startTime.getHours()*60+ev.startTime.getMinutes());
       const eM=Math.min(eMin,ev.endTime.getHours()*60+ev.endTime.getMinutes());
@@ -878,27 +1009,44 @@ function calculateStatsAndTimeline(){
     }
   });
   const freeM=Math.max(0,totalM-meetM);
-  safeSetText("statMeetingsCount",todayEvents.length);
+  safeSetText("statMeetingsCount",targetEvents.length);
   safeSetText("statProjectsCount",projectsList.length);
   safeSetText("statTotalTasksCount",allTasks.length);
   safeSetText("statFreeHours",(freeM/60).toFixed(1)+"h");
 
   const tl=document.getElementById("timelineListContainer");if(!tl)return;tl.innerHTML="";
-  todayEvents.forEach(ev=>{
+  targetEvents.forEach(ev=>{
     const el=document.createElement("div");el.className="timeline-item meeting";
-    el.innerHTML=`<div class="timeline-time">${ev.startFormatted||"All-Day"} - ${ev.endFormatted||""}</div><div><strong>${ev.summary}</strong><div style="font-size:0.72rem;color:var(--text-muted);">Calendar Commitment (${ev.source||"Feed"})</div></div>`;
+    el.innerHTML=`<div class="timeline-time">${escapeHtml(ev.startFormatted||"All-Day")} - ${escapeHtml(ev.endFormatted||"")}</div><div><strong>${escapeHtml(ev.summary)}</strong><div style="font-size:0.72rem;color:var(--text-muted);">Calendar Commitment (${escapeHtml(ev.source||"Feed")})</div></div>`;
     tl.appendChild(el);
   });
 }
 
 // MODEL FALLBACK CHAIN
+function usesAllowedProviderHost(provider,url){
+  if(provider==="custom"||provider==="ollama")return false;
+  const defaultEndpoint=PROVIDER_DEFAULTS[provider]?.endpoint;
+  if(!defaultEndpoint)return false;
+  const configuredEndpoint=config.endpoint||defaultEndpoint;
+  try{return configuredEndpoint===defaultEndpoint&&new URL(url).hostname===new URL(defaultEndpoint).hostname}
+  catch(e){return false}
+}
+
+function requestAIProvider(url,options){
+  if(usesAllowedProviderHost(config.provider,url)){
+    if(typeof window.PluginAPI?.request!=="function")throw new Error("The app's allowlisted HTTP request API is unavailable.");
+    return PluginAPI.request(url,options);
+  }
+  return fetch(url,options);
+}
+
 async function executeAIPrompt(promptText,sysPrompt){
   const p=config.provider,apiKey=config.apiKey,model=config.model;
   if(p==="gemini"){
     if(!apiKey)throw new Error("Enter Google Gemini API Key in Settings.");
     for(const m of[model,"gemini-2.5-flash","gemini-3.6-flash","gemini-1.5-flash"].filter(Boolean)){
       try{
-        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{
+        const res=await requestAIProvider(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,{
           method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({contents:[{parts:[{text:`${sysPrompt}\n\n${promptText}`}]}],generationConfig:{responseMimeType:"application/json",temperature:0.3}})
         });
@@ -909,7 +1057,7 @@ async function executeAIPrompt(promptText,sysPrompt){
   }
   if(p==="claude"){
     if(!apiKey)throw new Error("Enter Claude API Key.");
-    const res=await fetch(config.endpoint||"https://api.anthropic.com/v1/messages",{
+    const res=await requestAIProvider(config.endpoint||"https://api.anthropic.com/v1/messages",{
       method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
       body:JSON.stringify({model:model||"claude-3-7-sonnet-20250219",max_tokens:4000,system:sysPrompt,messages:[{role:"user",content:promptText}]})
     });
@@ -919,7 +1067,7 @@ async function executeAIPrompt(promptText,sysPrompt){
   const ep=config.endpoint||PROVIDER_DEFAULTS[p]?.endpoint||"https://api.openai.com/v1/chat/completions";
   const hd={"Content-Type":"application/json"};
   if(apiKey&&p!=="ollama")hd["Authorization"]=`Bearer ${apiKey}`;
-  const res=await fetch(ep,{
+  const res=await requestAIProvider(ep,{
     method:"POST",headers:hd,
     body:JSON.stringify({model,temperature:0.3,response_format:{type:"json_object"},messages:[{role:"system",content:sysPrompt},{role:"user",content:promptText}]})
   });
@@ -937,52 +1085,33 @@ safeListen("btnTestAIConnection","click",async()=>{
 
 async function performMultiProjectDryRun(){
   const btn=document.getElementById("btnDryRun");if(!btn)return;
-  const orig=btn.innerHTML;btn.innerHTML=`<span class="loading-spinner"></span> Scheduling Full Day...`;btn.disabled=true;
+  const orig=btn.innerHTML;btn.innerHTML=`<span class="loading-spinner"></span> Drafting Schedule...`;btn.disabled=true;
   try{
     await scanSuperProductivityData();
     const freeSlots=calculateFreeTimeSlots();
     const curStart=document.getElementById("workdayStart")?.value||config.workdayStart||"09:00";
     const curEnd=document.getElementById("workdayEnd")?.value||config.workdayEnd||"18:00";
-    let projText=projectsList.map(p=>`PROJECT "${p.title}":\n`+(projectTaskMap[p.id]||[]).map(x=>`  - [${x.id}] "${x.title}" (${Math.round((x.timeEstimate||1800000)/60000)}m)`).join("\n")).join("\n\n");
-    const calText=todayEvents.map(e=>`- [${e.startFormatted} to ${e.endFormatted}]: "${e.summary}"`).join("\n")||"No meetings.";
+    const backlogTasks=getUnscheduledBacklogTasks();
+    const projText=buildPlannerInput(backlogTasks,projectsList);
+    const targetDateKey=getTargetDateISOString();
+    const calText=todayEvents.filter(e=>e.startTime&&toLocalDateKey(e.startTime)===targetDateKey).map(e=>`- [${e.startFormatted} to ${e.endFormatted}]: "${e.summary}"`).join("\n")||"No meetings.";
     const slotsText=freeSlots.map(s=>`• FREE SLOT: ${s.startTime} to ${s.endTime} (${s.durationMin} min)`).join("\n");
-    const sysPrompt=`You are a Continuous Full-Day Schedule AI Engine for ${planningDateMode.toUpperCase()}. Populate 100% of free slots between ${curStart} and ${curEnd} with ZERO gaps. Output JSON: {"daySummary":"Summary","recommendedTasks":[{"title":"Task Name","projectId":"p1","projectName":"Core Work","startTime":"${curStart}","endTime":"09:30","timeEstimateMinutes":30,"priority":"HIGH","category":"PROJECT_TASK","rationale":"Focus block."}]}`;
+    const sysPrompt=`You are a daily scheduling assistant for ${planningDateMode.toUpperCase()}. Schedule available existing tasks into suitable free slots without duplicating tasks or inventing work. Leave any unfilled time open. For an existing task, return its exact originalTaskId from the backlog and actionType "SCHEDULE_EXISTING". New work may omit originalTaskId. Output JSON: {"daySummary":"Summary","recommendedTasks":[{"title":"Task Name","originalTaskId":"exact-backlog-id","actionType":"SCHEDULE_EXISTING","projectId":"p1","projectName":"Core Work","startTime":"${curStart}","endTime":"09:30","timeEstimateMinutes":30,"priority":"HIGH","category":"PROJECT_TASK","rationale":"Focus block."}]}`;
     const uPrompt=`TARGET DATE: ${planningDateMode.toUpperCase()} (${getTargetDateISOString()})\nRANGE: ${curStart}-${curEnd}\nMEETINGS:\n${calText}\nFREE SLOTS:\n${slotsText}\nPROJECTS:\n${projText}\nDIRECTIVES: ${config.customPrompt}`;
 
     let plan;
     if(!config.apiKey&&config.provider!=="ollama"){
-      showNotification(`Simulating continuous schedule for ${planningDateMode.toUpperCase()}!`,"INFO");
+      showNotification(`Drafting from existing tasks for ${planningDateMode.toUpperCase()}!`,"INFO");
       await new Promise(r=>setTimeout(r,500));
-      const simTasks=[];let taskCursor=0;
-      const genericBacklog=["Implement core pipeline architecture","Refactor data service & unit tests","Review pull requests & deliverables","Architecture design & schema review","Security audit & dependency updates","Sprint notes & Inbox Zero"];
       const preferredChunk=parseInt(document.getElementById("preferredChunkDuration")?.value||config.preferredChunk||"60",10);
-
-      freeSlots.forEach((slot)=>{
-        let slotRemaining=slot.durationMin,curMin=slot.startMin;
-        while(slotRemaining>0){
-          const chunkMin=slotRemaining>=(preferredChunk*1.5)?preferredChunk:(slotRemaining>=preferredChunk?preferredChunk:slotRemaining);
-          const chunkEnd=curMin+chunkMin;
-          const sh=Math.floor(curMin/60).toString().padStart(2,'0'),sm=(curMin%60).toString().padStart(2,'0');
-          const eh=Math.floor(chunkEnd/60).toString().padStart(2,'0'),em=(chunkEnd%60).toString().padStart(2,'0');
-          let tObj=allTasks[taskCursor%allTasks.length];
-          let tTitle=tObj?tObj.title:genericBacklog[taskCursor%genericBacklog.length];
-          let pTitle=projectsList.find(p=>p.id===tObj?.projectId)?.title||"Core Focus";
-          simTasks.push({
-            title:tTitle+(slotRemaining>60?" [Sprint]":""),projectId:tObj?.projectId||null,projectName:pTitle,
-            startTime:`${sh}:${sm}`,endTime:`${eh}:${em}`,timeEstimateMinutes:chunkMin,
-            priority:chunkMin>=45?"HIGH":"MEDIUM",category:"PROJECT_TASK",originalTaskId:tObj?.id||null,
-            rationale:`Filled open slot ${sh}:${sm}-${eh}:${em} with high-impact project execution.`
-          });
-          curMin=chunkEnd;slotRemaining-=chunkMin;taskCursor++;
-        }
-      });
-      plan={daySummary:`Continuous full-day schedule across ${freeSlots.length} free time gaps (${simTasks.length} focus blocks) from ${curStart} to ${curEnd}.`,recommendedTasks:simTasks};
+      plan=buildSimulatedPlan(backlogTasks,freeSlots,preferredChunk);
     }else{
       plan=await executeAIPrompt(uPrompt,sysPrompt);
     }
+    plan.recommendedTasks=normalizePlanItems(plan.recommendedTasks,backlogTasks,appTaskIds);
     saveCurrentPlanToStorage(plan);
     renderStagedItems(plan.recommendedTasks||[],plan.daySummary||"",true);
-    showNotification(`Full-day schedule generated with ${plan.recommendedTasks?.length||0} continuous blocks!`,"SUCCESS");
+    showNotification(`Schedule draft contains ${plan.recommendedTasks?.length||0} task(s). Unfilled time remains open.`,"SUCCESS");
   }catch(e){alert("Dry run failed: "+e.message)}
   finally{btn.innerHTML=orig;btn.disabled=false}
 }
@@ -1001,25 +1130,25 @@ function renderStagedItems(items,summaryText,shouldSwitch=true){
       const card=document.createElement("div");
       card.className="staged-card";
       const pClass=it.priority==="HIGH"?"badge-high":it.priority==="MEDIUM"?"badge-med":"badge-low";
-      const catBadge=`<span class="badge badge-proj">📁 ${it.projectName||"Project"}</span>`;
+      const catBadge=`<span class="badge badge-proj">📁 ${escapeHtml(it.projectName||"Project")}</span>`;
       card.innerHTML=`
         <div class="staged-header">
           <input type="checkbox" class="task-checkbox" data-index="${idx}" checked style="width:15px;height:15px;cursor:pointer;" />
-          <input type="text" class="staged-title-input task-title-input" data-index="${idx}" value="${it.title}" />
+          <input type="text" class="staged-title-input task-title-input" data-index="${idx}" value="${escapeHtml(it.title)}" />
         </div>
         <div class="staged-meta-row">
-          <div>${catBadge} <span class="badge ${pClass}">${it.priority||"MED"}</span></div>
+          <div>${catBadge} <span class="badge ${pClass}">${escapeHtml(it.priority||"MED")}</span></div>
           <div class="staged-time-controls">
             <span style="font-size:0.72rem;color:var(--text-muted);">Exact:</span>
-            <input type="time" class="task-time-box task-start-time" data-index="${idx}" value="${it.startTime||"09:00"}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <input type="time" class="task-time-box task-start-time" data-index="${idx}" value="${escapeHtml(it.startTime||"09:00")}" onchange="onStagedTimeLiveEdit(${idx})"/>
             <span>-</span>
-            <input type="time" class="task-time-box task-end-time" data-index="${idx}" value="${it.endTime||"10:00"}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <input type="time" class="task-time-box task-end-time" data-index="${idx}" value="${escapeHtml(it.endTime||"10:00")}" onchange="onStagedTimeLiveEdit(${idx})"/>
             <span style="font-size:0.72rem;color:var(--text-muted);margin-left:3px;">Est:</span>
-            <input type="number" class="task-est-box task-est-input" data-index="${idx}" value="${it.timeEstimateMinutes||30}" onchange="onStagedTimeLiveEdit(${idx})"/>
+            <input type="number" class="task-est-box task-est-input" data-index="${idx}" value="${escapeHtml(it.timeEstimateMinutes||30)}" onchange="onStagedTimeLiveEdit(${idx})"/>
             <span style="font-size:0.72rem;color:var(--text-muted);">m</span>
           </div>
         </div>
-        <div class="staged-rationale">💡 ${it.rationale||"Continuous focus block."}</div>`;
+        <div class="staged-rationale">💡 ${escapeHtml(it.rationale||"Focus block.")}</div>`;
       cont.appendChild(card);
     });
     renderProjectedTimeline(stagedItems);
@@ -1044,9 +1173,46 @@ function renderProjectedTimeline(items){
   items.forEach(t=>{
     const el=document.createElement("div");
     el.className="timeline-item project-task";
-    el.innerHTML=`<div class="timeline-time">${t.startTime||""} - ${t.endTime||""}</div><div><strong>${t.title}</strong><div style="font-size:0.72rem;color:var(--text-muted);">[${t.projectName||"Task"}] - ${t.rationale||""}</div></div>`;
+    el.innerHTML=`<div class="timeline-time">${escapeHtml(t.startTime||"")} - ${escapeHtml(t.endTime||"")}</div><div><strong>${escapeHtml(t.title)}</strong><div style="font-size:0.72rem;color:var(--text-muted);">[${escapeHtml(t.projectName||"Task")}] - ${escapeHtml(t.rationale||"")}</div></div>`;
     cont.appendChild(el);
   });
+}
+
+function buildSimulatedPlan(tasks,freeSlots,preferredChunk){
+  const recommendedTasks=[];const usedIds=new Set();let taskCursor=0;
+  const chunkSize=Math.max(1,Number(preferredChunk)||60);
+  freeSlots.forEach(slot=>{
+    let remaining=slot.durationMin,curMin=slot.startMin;
+    while(remaining>0&&taskCursor<tasks.length){
+      const task=tasks[taskCursor++];
+      if(!task?.id||usedIds.has(task.id))continue;
+      usedIds.add(task.id);
+      const estimateMin=Math.max(1,Math.ceil((task.timeEstimate||chunkSize*60000)/60000));
+      const chunkMin=Math.min(remaining,chunkSize,estimateMin);
+      const chunkEnd=curMin+chunkMin;
+      const sh=Math.floor(curMin/60).toString().padStart(2,"0"),sm=(curMin%60).toString().padStart(2,"0");
+      const eh=Math.floor(chunkEnd/60).toString().padStart(2,"0"),em=(chunkEnd%60).toString().padStart(2,"0");
+      const project=projectsList.find(item=>item.id===task.projectId);
+      const stagedTask={
+        title:task.title,projectId:task.projectId||null,projectName:project?.title||"Project",
+        startTime:`${sh}:${sm}`,endTime:`${eh}:${em}`,timeEstimateMinutes:chunkMin,
+        priority:"MEDIUM",category:"PROJECT_TASK",
+        rationale:"Scheduled from the existing backlog; remaining time stays open."
+      };
+      if(appTaskIds.has(task.id)){
+        stagedTask.actionType="SCHEDULE_EXISTING";
+        stagedTask.originalTaskId=task.id;
+      }else{
+        stagedTask.localTaskId=task.id;
+      }
+      recommendedTasks.push(stagedTask);
+      curMin=chunkEnd;remaining-=chunkMin;
+    }
+  });
+  return{
+    daySummary:`Drafted ${recommendedTasks.length} existing task(s) across ${freeSlots.length} open time slot(s). Unfilled time remains open.`,
+    recommendedTasks
+  };
 }
 
 function updateApplyButtonsState(){
@@ -1063,16 +1229,17 @@ safeListen("btnSelectAllTasks","click",()=>{
 
 document.addEventListener("change",(e)=>{if(e.target.classList.contains("task-checkbox"))updateApplyButtonsState()});
 
-// APPLY TASKS: SET plannedAt, dueWithTime, AND remindAt
+// APPLY STAGED TASKS
 async function applySelectedTasksOnly(){
   const cbs=Array.from(document.querySelectorAll(".task-checkbox:checked"));
   if(cbs.length===0)return showNotification("No tasks selected.","WARNING");
   const btn=document.getElementById("btnApplyTasksToToday");const orig=btn?btn.innerHTML:"";
   if(btn){btn.innerHTML=`<span class="loading-spinner"></span> Scheduling...`;btn.disabled=true}
   let tasksN=0;
-  const targetDate=getTargetDateObject(),targetDayStr=getTargetDateISOString();
-  const validProjectIds=new Set(projectsList.map(p=>p.id));
-  const newCreatedIds=[];
+  const targetDate=getTargetDateObject();
+  const validProjectIds=appProjectIds;
+  const existingTasksById=new Map(getUnscheduledBacklogTasks().filter(t=>t.id).map(t=>[t.id,t]));
+  const appliedTasks=[];const scheduledExistingIds=new Set();
 
   try{
     for(const cb of cbs){
@@ -1089,103 +1256,87 @@ async function applySelectedTasksOnly(){
       }
       const notes=`Scheduled: ${sTime} - ${eTime}\nArea: ${it.projectName||"Inbox"}\nRationale: ${it.rationale||""}`;
       const targetProjectId=(it.projectId&&validProjectIds.has(it.projectId))?it.projectId:undefined;
-
-      const taskPayload={
-        title,
-        timeEstimate:estMs,
-        dueWithTime:scheduleTimestamp,
-        plannedAt:scheduleTimestamp,
-        remindAt:scheduleTimestamp,
-        dueDay:targetDayStr,
-        tagIds:planningDateMode==="today"?["TODAY"]:[],
-        notes,
-        isDone:false,
-        created:Date.now()
-      };
-      if(targetProjectId)taskPayload.projectId=targetProjectId;
-
-      if(it.actionType==="SCHEDULE_EXISTING"&&it.originalTaskId&&window.PluginAPI?.updateTask){
-        await PluginAPI.updateTask(it.originalTaskId,taskPayload);
-        newCreatedIds.push(it.originalTaskId);tasksN++;
-      }else if(window.PluginAPI?.addTask){
-        const resId=await PluginAPI.addTask(taskPayload);
-        if(resId){
-          newCreatedIds.push(resId);
-          if(typeof PluginAPI.updateTask==="function"&&scheduleTimestamp){
-            try{await PluginAPI.updateTask(resId,{plannedAt:scheduleTimestamp,dueWithTime:scheduleTimestamp})}catch(e){}
-          }
-        }
+      const originalTask=it.originalTaskId&&existingTasksById.get(it.originalTaskId);
+      if(originalTask&&appTaskIds.has(originalTask.id)&&it.actionType==="SCHEDULE_EXISTING"){
+        if(scheduledExistingIds.has(originalTask.id))continue;
+        if(!window.PluginAPI?.updateTask)throw new Error("Task update is unavailable.");
+        await PluginAPI.updateTask(originalTask.id,{dueWithTime:scheduleTimestamp,dueDay:null,timeEstimate:estMs});
+        scheduledExistingIds.add(originalTask.id);
+        appliedTasks.push({id:originalTask.id,previous:{
+          dueDay:originalTask.dueDay??null,dueWithTime:originalTask.dueWithTime??null,timeEstimate:originalTask.timeEstimate
+        }});
+        persistUndoBatch(appliedTasks);
         tasksN++;
-      }else{tasksN++}
+      }else if(it.originalTaskId&&!customTasks.some(task=>task.id===it.originalTaskId)){
+        continue;
+      }else{
+        const localTaskId=it.localTaskId||(it.originalTaskId&&customTasks.some(task=>task.id===it.originalTaskId)?it.originalTaskId:null);
+        if(it.localTaskId&&!customTasks.some(task=>task.id===it.localTaskId))continue;
+        if(!window.PluginAPI?.addTask||!window.PluginAPI?.updateTask)throw new Error("Task creation or scheduling is unavailable.");
+        const taskPayload={title,timeEstimate:estMs,dueDay:toLocalDateKey(targetDate)};
+        if(targetProjectId)taskPayload.projectId=targetProjectId;
+        if(notes)taskPayload.notes=notes;
+        const resId=await PluginAPI.addTask(taskPayload);
+        if(!resId)throw new Error(`Could not create task "${title}".`);
+        if(localTaskId){
+          customTasks=customTasks.filter(task=>task.id!==localTaskId);
+          saveCustomProjects();
+        }
+        appliedTasks.push({id:resId,previous:null});
+        persistUndoBatch(appliedTasks);
+        await PluginAPI.updateTask(resId,{dueWithTime:scheduleTimestamp,dueDay:null,timeEstimate:estMs});
+        tasksN++;
+      }
     }
 
-    lastAppliedTaskIds=newCreatedIds;
-    localStorage.setItem("sp_last_applied_task_ids",JSON.stringify(lastAppliedTaskIds));
+    if(appliedTasks.length)persistUndoBatch(appliedTasks);
     updateUndoButtonVisibility();
 
-    showNotification(`Scheduled ${tasksN} task(s) with exact start time for ${planningDateMode.toUpperCase()}!`,"SUCCESS");
+    showNotification(`Scheduled ${tasksN} task(s) for ${planningDateMode.toUpperCase()}!`,"SUCCESS");
     await scanSuperProductivityData();
   }catch(e){alert("Failed: "+e.message)}
   finally{if(btn)btn.innerHTML=orig;updateApplyButtonsState()}
 }
 
-// ROBUST TASK DELETION & CLEANUP ENGINE
-async function removeOrUnscheduleTask(tId){
-  if(window.PluginAPI){
-    if(typeof PluginAPI.deleteTask==="function"){
-      try{await PluginAPI.deleteTask(tId);return true}catch(e){}
-    }
-    if(typeof PluginAPI.removeTask==="function"){
-      try{await PluginAPI.removeTask(tId);return true}catch(e){}
-    }
-    if(typeof PluginAPI.updateTask==="function"){
-      try{await PluginAPI.updateTask(tId,{isDone:true,dueDay:null,dueWithTime:null,plannedAt:null,tagIds:[]});return true}catch(e){}
-    }
-  }
-  return false;
-}
-
 // UNDO LAST APPLIED TASKS
 async function undoLastAppliedTasks(){
-  if(!lastAppliedTaskIds||lastAppliedTaskIds.length===0)return showNotification("No recently added tasks to undo.","INFO");
-  if(!confirm(`Undo & remove the last ${lastAppliedTaskIds.length} added tasks?`))return;
+  if(!lastAppliedTasks||lastAppliedTasks.length===0)return showNotification("No recently scheduled tasks to undo.","INFO");
+  if(!confirm(`Undo scheduling for the last ${lastAppliedTasks.length} task(s)? Tasks will be preserved.`))return;
 
-  let removed=0;
+  let reverted=0;
   try{
-    for(const tId of lastAppliedTaskIds){
-      if(typeof tId==="string"){
-        const ok=await removeOrUnscheduleTask(tId);
-        if(ok)removed++;
-      }
+    for(const entry of lastAppliedTasks){
+      if(typeof entry?.id!=="string"||!window.PluginAPI?.updateTask)continue;
+      const schedule=entry.previous||{dueDay:null,dueWithTime:null};
+      await PluginAPI.updateTask(entry.id,schedule);
+      reverted++;
     }
-    lastAppliedTaskIds=[];
+    lastAppliedTasks=[];
     localStorage.removeItem("sp_last_applied_task_ids");
     updateUndoButtonVisibility();
-    showNotification(`Successfully reverted ${removed} task(s)!`,"SUCCESS");
+    showNotification(`Restored scheduling for ${reverted} task(s); task content was preserved.`,"SUCCESS");
     await scanSuperProductivityData();
   }catch(e){alert("Undo failed: "+e.message)}
 }
 
-// CLEAN TODAY & INBOX TASKS
+// UNSCHEDULE TASKS FOR THE ACTIVE DATE
 async function cleanCurrentDateTasks(){
   const targetDayStr=getTargetDateISOString();
-  const choice=confirm(`Clean tasks for ${planningDateMode.toUpperCase()} (${targetDayStr})?\n\nClick OK to clean uncompleted tasks scheduled for ${planningDateMode.toUpperCase()} & all unassigned Inbox backlog tasks.`);
-  if(!choice)return;
-
-  let cleaned=0;
   try{
-    if(window.PluginAPI?.getTasks){
-      const tasks=await PluginAPI.getTasks();
-      for(const t of(tasks||[])){
-        const isTargetDate=(t.dueDay===targetDayStr||(planningDateMode==="today"&&t.tagIds?.includes("TODAY")));
-        const isInboxTask=(!t.projectId||t.projectId===""||t.projectId===null);
-        if(!t.isDone&&(isTargetDate||isInboxTask)){
-          const ok=await removeOrUnscheduleTask(t.id);
-          if(ok)cleaned++;
-        }
+    if(!window.PluginAPI?.getTasks||!window.PluginAPI?.updateTask)throw new Error("Task access is unavailable.");
+    const tasks=await PluginAPI.getTasks();
+    const matching=(tasks||[]).filter(t=>!t.isDone&&isTaskScheduledForDate(t,targetDayStr));
+    const taskLabel=matching.length===1?"task":"tasks";
+    const choice=confirm(`Unschedule ${matching.length} ${taskLabel} for ${planningDateMode.toUpperCase()} (${targetDayStr})?\n\nTasks, projects, and subtasks will be preserved.`);
+    if(!choice)return;
+    for(const task of matching){
+      const update={dueDay:null,dueWithTime:null};
+      if(planningDateMode==="today"&&task.tagIds?.includes("TODAY")){
+        update.tagIds=task.tagIds.filter(tag=>tag!=="TODAY");
       }
+      await PluginAPI.updateTask(task.id,update);
     }
-    showNotification(`Cleaned ${cleaned} uncompleted task(s) from Today & Inbox!`,"SUCCESS");
+    showNotification(`Unscheduled ${matching.length} task(s); task content and subtasks were preserved.`,"SUCCESS");
     await scanSuperProductivityData();
   }catch(e){alert("Cleanup failed: "+e.message)}
 }
@@ -1206,12 +1357,13 @@ window.addEventListener("DOMContentLoaded",()=>{
   setPlanningDate("today");
   if(window.PluginAPI&&typeof PluginAPI.registerHook==="function"){
     PluginAPI.registerHook("finishDay",async()=>{
-      console.log("finishDay triggered: Auto-drafting tomorrow plan...");
+      if(config.autoDraftOnFinishDay!==true)return;
+      const previousMode=planningDateMode;
       try{
         setPlanningDate("tomorrow");
         await performMultiProjectDryRun();
-        setPlanningDate("today");
-      }catch(e){}
+      }catch(e){showNotification(`Automatic draft failed: ${e.message}`,"ERROR")}
+      finally{setPlanningDate(previousMode)}
     });
   }
 });

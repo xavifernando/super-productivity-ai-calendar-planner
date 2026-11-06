@@ -1,32 +1,22 @@
 {
   "id": "ai-calendar-planner",
   "name": "AI Calendar & Habits Planner",
-  "version": "4.6.0",
+  "version": "4.6.1",
   "manifestVersion": 1,
   "minSupVersion": "18.0.0",
   "author": "xavier sethu",
-  "description": "Universal AI daily task & calendar scheduler with continuous hour-by-hour timeblocking, Tomorrow planning, Habits & Rituals System, and direct Super Productivity task integration.",
+  "description": "AI-assisted daily task and calendar planner with Today/Tomorrow scheduling, habits, and Super Productivity task integration.",
   "iFrame": true,
   "icon": "icon.svg",
   "permissions": [
     "http",
     "getTasks",
-    "getArchivedTasks",
-    "getCurrentContextTasks",
     "addTask",
     "updateTask",
-    "deleteTask",
-    "getAppState",
     "getAllProjects",
-    "getAllTags",
-    "getAllCounters",
     "getCounter",
     "setCounter",
-    "incrementCounter",
-    "decrementCounter",
-    "deleteCounter",
-    "showSnack",
-    "openDialog"
+    "showSnack"
   ],
   "hooks": [
     "finishDay"
@@ -36,8 +26,6 @@
     "api.openai.com",
     "api.anthropic.com",
     "openrouter.ai",
-    "api.groq.com",
-    "localhost",
-    "calendar.google.com"
+    "api.groq.com"
   ]
 }
