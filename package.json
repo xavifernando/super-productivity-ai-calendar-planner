@@ -1,6 +1,9 @@
 {
   "name": "super-productivity-ai-calendar-planner",
-  "version": "4.6.0",
+  "version": "4.6.1",
+  "scripts": {
+    "test": "node --test"
+  },
   "description": "Super Productivity plugin for AI-powered continuous timeblocking, habits rhythm, project backlog explorer, and direct task scheduling.",
   "main": "plugin.js",
   "author": "xavier sethu",
