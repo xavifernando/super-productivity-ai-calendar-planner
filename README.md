@@ -1,6 +1,6 @@
 # Super Productivity AI Calendar & Habits Planner Plugin
 
-A universal AI-powered daily task, habits, and calendar scheduler with continuous hour-by-hour timeblocking, Tomorrow planning, Habits & Rituals management, interactive Project Backlog Explorer, and direct Super Productivity integration.
+A daily task, habits, and calendar planner for Super Productivity with Today/Tomorrow scheduling, Habits & Rituals management, and an interactive Project Backlog Explorer.
 
 ![Super Productivity AI Calendar & Habits Planner](icon.svg)
 
@@ -8,16 +8,15 @@ A universal AI-powered daily task, habits, and calendar scheduler with continuou
 
 ## 🚀 Key Features
 
-- **Continuous Full-Day Timeblocking:** Mathematically analyzes calendar commitments (Google Calendar, Outlook, local iCal) and populates 100% of open hours with high-impact project tasks and deep work sessions with zero dead gaps.
+- **AI-assisted Scheduling:** Uses calendar commitments and existing backlog tasks to draft a schedule. Unfilled time remains open; the planner does not invent tasks or repeat backlog tasks to fill every slot.
 - **Collapsible Projects Explorer:** Organize project backlogs with collapsible accordions, per-project *Toggle All* switches, and one-click **`➕ Add to Today`** buttons.
 - **Habits & Rituals System:** Customizable habit categories with category *Toggle All* switches and idempotent 1-click sync to Super Productivity's native habit tracker (`#/habits`).
-- **Plan for Today & Tomorrow:** Toggle seamlessly between planning Today and staging tomorrow's continuous schedule in advance before evening shutdown.
-- **Background `finishDay` Auto-Drafting:** Uses `registerHook("finishDay")` to automatically generate a draft schedule for tomorrow whenever you conclude your workday.
+- **Plan for Today & Tomorrow:** Toggle between planning today and preparing a draft for tomorrow.
+- **Optional `finishDay` Auto-Drafting:** Off by default. When enabled in AI Providers, the `finishDay` hook reads configured calendars and task/project titles and estimates, then sends planning context to the selected AI provider.
 - **Multi-LLM AI Engine with Fallback:** Built-in zero-dependency support for **Google Gemini**, **OpenAI (GPT-4o)**, **Anthropic Claude**, **Ollama (Local LLMs)**, **OpenRouter**, **Groq**, and **Custom Endpoints**.
-- **Undo & Deep Cleanup:** Features **`↩️ Undo Apply`** to revert accidental schedule applications and **`🧹 Clear Today & Inbox`** to purge uncompleted tasks.
+- **Non-destructive schedule maintenance:** **`↩️ Undo Apply`** restores previous scheduling fields or unschedules newly created tasks; **`🗓️ Unschedule Date`** clears scheduling fields for incomplete tasks on the selected date while preserving tasks, projects, and subtasks.
 - **6 Modern Themes:** Choose between *Catppuccin Mocha*, *Monochrome Minimal (B&W)*, *Midnight OLED*, *Nord Arctic*, *Cyberpunk Neon*, and *Minimal Studio*.
-- **Direct Task Sync:** Tasks scheduled by the planner populate standard Super Productivity models with `plannedAt`, `dueWithTime`, and `timeEstimate`, syncing natively with your core app.
-- **100% Privacy-First:** No third-party CORS proxies; secret calendar URLs and API keys stay on your local device.
+- **Task Sync:** Scheduling updates existing tasks in place and creates tasks only for genuinely new plan items. Task data syncs through Super Productivity; plugin settings, plans, habits, and API keys remain local to the app installation.
 
 ---
 
@@ -33,10 +32,17 @@ A universal AI-powered daily task, habits, and calendar scheduler with continuou
 ## 🛠️ Quick Start
 
 1. **Calendar Feeds:** In **Settings ➔ Calendar Feeds**, paste your iCal URL (e.g. `https://calendar.google.com/.../basic.ics`) or upload a `.ics` file.
-2. **AI Provider (Optional):** In **Settings ➔ AI Providers**, choose your preferred model and paste your API key (stored safely in local storage only). If no API key is provided, the built-in continuous schedule simulation engine handles scheduling automatically!
+2. **AI Provider (Optional):** In **Settings ➔ AI Providers**, choose your provider and add an API key. Without a key, the planner drafts from your existing tasks. API keys and plugin settings are stored in the app's localStorage, which is not isolated from other installed iframe plugins; install only plugins you trust.
 3. **Habits & Rituals:** In **⚡ Habits & Rituals**, select active habits and click **`💾 Sync to Habits Section`**.
 4. **Project Explorer:** In **📁 Projects Explorer**, click **`➕ Add to Today`** on any project task or create custom tasks.
-5. **Dry Run & Apply:** Click **`🔍 Dry Run (Full Day Plan)`** to review your timeblocked day, adjust start/end times if desired, and click **`🚀 Apply Tasks`**!
+5. **Dry Run & Apply:** Click **`🔍 Dry Run (Schedule Draft)`** to review a proposed schedule, adjust it, and click **`🚀 Apply Tasks`**. Open time may remain when the backlog is smaller than the available schedule.
+
+## Data flow and network access
+
+- Fixed Google Gemini, OpenAI, Anthropic, OpenRouter, and Groq API requests use Super Productivity's `PluginAPI.request` host allowlist.
+- Calendar feeds, user-configured custom endpoints, and Ollama use direct browser requests. These destinations are user-configured and are not constrained by the manifest host list. Calendar feed URLs may contain private access tokens; the feed host receives those requests.
+- Enabling finishDay auto-drafting allows the selected AI provider to receive task/project titles, estimates, calendar details, and scheduling context without a manual Dry Run.
+- Plugin configuration and API keys remain in app-origin localStorage. Because iframe plugins share that origin, another installed plugin may be able to read them; the app's iframe API currently does not provide isolated secret storage.
 
 ---
 
